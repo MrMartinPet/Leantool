@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<title>20-Cycle-Check – Process Observation 03-1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#f7f7f7; --ink:#111; --grid:#cfcfcf; --grid-bold:#9a9a9a;
+    --panel:#e9e9e9; --head:#1f1f1f; --head-ink:#fff;
+    --alt:#f0f0f0; --accent:#2b7de9; --danger:#d9534f;
+    --avg:#e67e22; --brct:#2ecc71;
+    --row-h:28px;
+    --rows-visible:20;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 Arial,Helvetica,sans-serif}
+  .page{
+    margin:12px auto;
+    width:min(1280px, 96vw);
+    aspect-ratio:16/9;
+    display:flex;flex-direction:column;gap:10px;
+  }
+
+  .band{display:grid;grid-template-columns:1fr 220px 320px;gap:6px;border:2px solid #000;background:#fff}
+  .band > div{border-left:1px solid #000}
+  .band > div:first-child{border-left:none}
+  .cell{min-height:54px;padding:6px}
+  .cell h3{margin:0 0 4px;font-size:13px;letter-spacing:.3px;color:#444}
+  .cell input{width:100%;padding:8px;border:1px solid #bbb;border-radius:4px;font-size:14px}
+  .title{background:#efefef;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;text-align:center}
+
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  button{cursor:pointer;border:none;border-radius:8px;padding:10px 14px;font-weight:700}
+  .primary{background:var(--accent);color:#fff}
+  .danger{background:var(--danger);color:#fff}
+  .ghost{background:#fff;border:1px solid #bbb}
+  .pill{background:#fff;border:1px dashed #888;border-radius:20px;padding:6px 10px;font-size:12px;color:#444}
+  #liveTimer{margin-left:auto;font-weight:800;font-size:22px;background:#000;color:#0f0;padding:6px 10px;border-radius:8px;min-width:140px;text-align:center}
+
+  .main{display:grid;grid-template-columns:1fr 360px;gap:10px;min-height:0;flex:1}
+  .chartBox{position:relative;border:2px solid #000;background:#fff;min-height:0}
+  .chartTopBorder{position:absolute;inset:0 0 auto 0;height:0;border-top:6px solid #000}
+  #chart{display:block;width:100%;height:100%}
+
+  .side{border:2px solid #000;background:#fff;display:flex;flex-direction:column;min-height:0}
+  .sideHead{display:grid;grid-template-columns:80px 100px 1fr;background:var(--head);color:var(--head-ink);font-weight:700}
+  .sideHead div{padding:8px;border-left:1px solid #444}
+  .sideHead div:first-child{border-left:none}
+  .rows{flex:1;overflow:auto;border-top:1px solid #000;height:calc(var(--rows-visible)*var(--row-h));}
+  .row{display:grid;grid-template-columns:80px 100px 1fr;border-top:1px solid #ddd;min-height:var(--row-h)}
+  .row:nth-child(odd){background:var(--alt)}
+  .row div, .row input, .row textarea{padding:6px;border-left:1px solid #ddd}
+  .row div:first-child{border-left:none}
+  .row input{width:100%;border:1px solid #bbb;border-radius:4px;height:26px}
+  .row textarea{width:100%;border:1px solid #bbb;border-radius:4px;resize:vertical;min-height:26px}
+
+  .footer{display:grid;grid-template-columns:1fr 360px;gap:10px}
+  .notes{border:2px solid #000;background:#fff;padding:8px}
+  .notes ol{margin:0 0 8px 18px}
+  .calc{border:2px solid #000;background:#fff;padding:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .calc .box{background:#fafafa;border:1px solid #ddd;border-radius:6px;padding:8px}
+  .calc .box h4{margin:0 0 6px;font-size:12px;color:#444}
+  .calc .val{font-weight:700;font-size:18px}
+
+  @media print{
+    @page { size: A4 landscape; margin: 10mm; }
+    body{background:#fff}
+    .page{width:100%;height:auto;aspect-ratio:auto}
+    .rows{overflow:visible}
+    button,.pill{display:none}
+    #liveTimer{display:inline-block}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  <div class="band">
+    <div class="cell">
+      <h3>PROCESS</h3>
+      <input id="processName" type="text" placeholder="Ange processnamn…" />
+    </div>
+    <div class="cell">
+      <h3>DATE</h3>
+      <input id="processDate" type="date" />
+    </div>
+    <div class="title">20-CYCLE-CHECK — PROCESS OBSERVATION 03-1</div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="primary" id="btnStart">Start / Next (SPACE)</button>
+    <button class="ghost" id="btnStop">Stop</button>
+    <button class="ghost" id="btnAddManual">Lägg till tid manuellt</button>
+    <button class="danger" id="btnReset">Nollställ</button>
+    <button class="ghost" id="btnExport">Exportera CSV (Excel ;)</button>
+    <span class="pill" id="hint">Status: redo</span>
+    <div id="liveTimer">00:00:00</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="chartBox">
+      <div class="chartTopBorder"></div>
+      <canvas id="chart"></canvas>
+    </div>
+    <div class="side">
+      <div class="sideHead">
+        <div>CYCLE</div>
+        <div>TIME(S)</div>
+        <div>OBSERVED PROBLEMS</div>
+      </div>
+      <div class="rows" id="rows"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="notes">
+      <ol>
+        <li>Skala Y-axeln efter längsta cykeltiden.</li>
+        <li>Rita varje cykel som en kolumn i diagrammet.</li>
+        <li>Visa Ø CT som hel linje.</li>
+        <li>Visa BRCT (snitt av 5 kortaste) som streckad linje (visas först vid ≥5 tider).</li>
+        <li>Beräkna störningsgrad D.</li>
+      </ol>
+    </div>
+    <div class="calc">
+      <div class="box"><h4>Ø CT (medel)</h4><div id="avgCt" class="val">–</div></div>
+      <div class="box"><h4>BRCT (5 snabbaste, medel)</h4><div id="brct" class="val">–</div></div>
+      <div class="box"><h4>D (störningsgrad) %</h4><div id="disturb" class="val">–</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- State ---------- */
+let times = [];           // ms per cycle
+let notes = [];           // text per cycle
+let running = false;
+let startStamp = null;
+let rafId = null;
+
+const rowsEl = document.getElementById('rows');
+const liveTimerEl = document.getElementById('liveTimer');
+const chart = document.getElementById('chart');
+const ctx = chart.getContext('2d');
+
+/* ---------- Helpers ---------- */
+const pad = n => n.toString().padStart(2,'0');
+function msToStr(ms){
+  if(ms==null) return '00:00:00';
+  const total = Math.floor(ms/10);
+  const cs = total % 100;
+  const s  = Math.floor(total/100) % 60;
+  const m  = Math.floor(total/6000);
+  return `${pad(m)}:${pad(s)}:${pad(cs)}`;
+}
+function msToStrBlank(ms){ return ms==null ? '' : msToStr(ms); }
+function strToMs(str){
+  if(!str) return null;
+  const parts = str.split(':').map(Number);
+  if(parts.length===3){
+    const [m,s,cs]=parts;
+    return ((m*60)+s)*1000 + (cs*10);
+  }
+  const sec = Number(String(str).replace(',','.'));
+  if(!isNaN(sec)) return Math.round(sec*1000);
+  return null;
+}
+function avg(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+
+/* BRCT = snitt av de 5 kortaste tiderna; returnerar null om <5 tider */
+function brct5(valuesMs){
+  const v = valuesMs.filter(t => t != null).slice().sort((a,b)=>a-b);
+  if (v.length < 5) return null;
+  let sum = 0;
+  for (let i = 0; i < 5; i++) sum += v[i];
+  return sum / 5;
+}
+
+/* ---------- Rows (tabell) ---------- */
+function ensureRow(i){
+  let row = rowsEl.querySelector(`[data-i="${i}"]`);
+  if(!row){
+    row = document.createElement('div');
+    row.className='row';
+    row.dataset.i = i;
+    row.innerHTML = `
+      <div class="cycle">${i+1}</div>
+      <div><input type="text" class="timeInput" placeholder="mm:ss:cc" /></div>
+      <div><textarea class="noteInput" placeholder="Observed problems…"></textarea></div>
+    `;
+    rowsEl.appendChild(row);
+    row.querySelector('.timeInput').addEventListener('change', (e)=>{
+      const valMs = strToMs(e.target.value.trim());
+      if(valMs==null){ e.target.value = msToStrBlank(times[i]); return; }
+      times[i]=valMs; redraw(); updateCalcs();
+    });
+    row.querySelector('.noteInput').addEventListener('input', (e)=>{ notes[i]=e.target.value; });
+  }
+  row.querySelector('.timeInput').value = msToStrBlank(times[i]);
+  row.querySelector('.noteInput').value = notes[i] ?? '';
+}
+function addCycle(ms=null, note=''){
+  const i = times.length;
+  times.push(ms);
+  notes.push(note);
+  ensureRow(i);
+  redraw();
+  updateCalcs();
+}
+
+/* ---------- Controls ---------- */
+document.getElementById('btnStart').addEventListener('click', startNext);
+document.getElementById('btnStop').addEventListener('click', stopTimer);
+document.getElementById('btnAddManual').addEventListener('click', ()=>{
+  const v = prompt('Ange tid (mm:ss:cc eller sekunder):','');
+  const ms = strToMs(v);
+  if(ms!=null){ addCycle(ms); setStatus('Manuell tid tillagd.'); }
+  else setStatus('Ogiltigt format.');
+});
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  if(!confirm('Nollställa alla tider och anteckningar?')) return;
+  running=false; cancelAnimationFrame(rafId); startStamp=null; times=[]; notes=[]; rowsEl.innerHTML='';
+  redraw(); updateCalcs(); setStatus('Nollställt.'); liveTimerEl.textContent='00:00:00';
+});
+document.getElementById('btnExport').addEventListener('click', exportCSV);
+document.addEventListener('keydown', (e)=>{
+  if(e.code==='Space'){
+    const ae = document.activeElement;
+    if(ae && (ae.tagName==='TEXTAREA' || ae.tagName==='INPUT')) return;
+    e.preventDefault();
+    startNext();
+  }
+});
+function setStatus(t){ document.getElementById('hint').textContent = 'Status: '+t; }
+
+/* ---------- Live timing ---------- */
+function startNext(){
+  if(!running){
+    running=true;
+    startStamp = performance.now();
+    ensureRow(times.length);
+    tick();
+    setStatus('Mätning pågår… (SPACE = nästa)');
+  }else{
+    const elapsed = performance.now() - startStamp;
+    addCycle(Math.round(elapsed));
+    startStamp = performance.now();
+    ensureRow(times.length);
+    setStatus('Cykel sparad. Mäter nästa…');
+  }
+}
+function stopTimer(){
+  if(!running){ setStatus('Ingen aktiv mätning.'); return; }
+  const elapsed = performance.now() - startStamp;
+  addCycle(Math.round(elapsed));
+  running=false; startStamp=null;
+  cancelAnimationFrame(rafId);
+  liveTimerEl.textContent='00:00:00';
+  setStatus('Mätning stoppad.');
+}
+function tick(){
+  if(!running) return;
+  const elapsed = Math.max(0, performance.now() - startStamp);
+  liveTimerEl.textContent = msToStr(elapsed);
+  ensureRow(times.length);
+  const row = rowsEl.querySelector(`[data-i="${times.length}"]`);
+  if(row){ row.querySelector('.timeInput').value = msToStr(elapsed); }
+  rafId = requestAnimationFrame(tick);
+}
+
+/* ---------- Calculations ---------- */
+function updateCalcs(){
+  const valid = times.filter(t=>t!=null);
+  const a = valid.length ? valid.reduce((s,x)=>s+x,0)/valid.length : 0;
+  const b = brct5(valid);                        // null om <5 tider
+  const hasBRCT = b != null;
+  const d = hasBRCT && a>0 ? ((a-b)/a)*100 : null;
+
+  document.getElementById('avgCt').textContent = valid.length? msToStr(a):'–';
+  document.getElementById('brct').textContent  = hasBRCT? msToStr(b):'–';
+  document.getElementById('disturb').textContent = hasBRCT? d.toFixed(1)+'%':'–';
+}
+
+/* ---------- Chart ---------- */
+function resizeCanvas(){
+  const rect = chart.getBoundingClientRect();
+  chart.width = Math.floor(rect.width * devicePixelRatio);
+  chart.height = Math.floor(rect.height * devicePixelRatio);
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  redraw();
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function redraw(){
+  const w = chart.clientWidth, h = chart.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  const padL = 48, padR = 16, padT = 16, padB = 28;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  const valid = times.filter(t=>t!=null);
+  const maxT = Math.max(1000, ...(valid.length? [Math.max(...valid)]:[0]));
+  const yMax = niceUp(maxT*1.15);
+
+  drawGrid(padL,padT,plotW,plotH,yMax);
+
+  // Bars
+  const n = times.length;
+  const barGap = 4;
+  const barW = Math.max(4, Math.min(24, Math.floor((plotW - (n+1)*barGap)/(n||1))));
+  let x = padL + barGap;
+  ctx.fillStyle = '#7a8ca6';
+  times.forEach((t, i)=>{
+    if(t==null){ x += barW+barGap; return; }
+    const y = padT + plotH - (t / yMax) * plotH;
+    ctx.fillRect(x, y, barW, padT + plotH - y);
+    ctx.fillStyle = '#333'; ctx.font = '11px Arial'; ctx.textAlign = 'center';
+    ctx.fillText(String(i+1), x+barW/2, padT+plotH+14);
+    ctx.fillStyle = '#7a8ca6';
+    x += barW + barGap;
+  });
+
+  // Ø CT (solid)
+  if(valid.length){
+    const avgT = avg(valid);
+    const y = padT + plotH - (avgT / yMax) * plotH;
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--avg');
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL+plotW, y); ctx.stroke();
+  }
+
+  // BRCT (dashed) – endast vid ≥5 tider, snitt av 5 kortaste
+  if(valid.length >= 5){
+    const b = brct5(valid);
+    const yb = padT + plotH - (b / yMax) * plotH;
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--brct');
+    ctx.setLineDash([6,6]); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(padL, yb); ctx.lineTo(padL+plotW, yb); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+function drawGrid(x,y,w,h,yMax){
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(x,y,w,h);
+  const steps = 10; ctx.lineWidth = 1;
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid');
+  ctx.font = '11px Arial'; ctx.fillStyle = '#333'; ctx.textAlign = 'right';
+  for(let i=0;i<=steps;i++){
+    const yy = y + h - (i/steps)*h;
+    ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+w,yy); ctx.stroke();
+    const valMs = (i/steps)*yMax;
+    ctx.fillText(msToStr(valMs), x-6, yy+4);
+  }
+}
+function niceUp(v){
+  const targets = [1,2,5,10];
+  let mult = 1;
+  while(true){
+    for(const t of targets){
+      const cand = t*mult*1000;
+      if(cand>=v) return cand;
+    }
+    mult*=10;
+  }
+}
+
+/* ---------- Export ---------- */
+function exportCSV(){
+  const sep=';';
+  const header=['Process','Date','Cycle','Time','Observed problems'];
+  const rows=[header.join(sep)];
+  const pname=(document.getElementById('processName').value||'').replace(/;/g,',');
+  const pdate=(document.getElementById('processDate').value||'');
+  for(let i=0;i<times.length;i++){
+    const t = msToStrBlank(times[i]);
+    const note = (notes[i]||'').replace(/\r?\n/g,' ').replace(/;/g,',');
+    rows.push([pname,pdate,String(i+1),t,note].join(sep));
+  }
+  const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='20-cycle-check.csv';
+  a.click();
+}
+
+/* ---------- Init ---------- */
+redraw(); updateCalcs();
+</script>
+</body>
+</html>
