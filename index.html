@@ -9,53 +9,52 @@
 <style>
   :root{
     --bg:#f7f7f9; --paper:#ffffff; --ink:#0f172a; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb;
-    --radius:12px; --tap:46px; --vh:1vh; --fs:clamp(14px,2.3vw,16px); --fs-sm:clamp(12px,2vw,14px);
+    --radius:10px; --tap:40px; --fs:clamp(13px,2.2vw,15px); --fs-sm:clamp(11px,1.9vw,13px);
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;font-size:var(--fs);background:var(--bg);color:var(--ink)}
-  .app{min-height:100%;padding:12px}
-  .row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
-  .row-top{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end}
-  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 1px rgba(0,0,0,.02)}
-  .pad{padding:12px}
+  .app{min-height:100%;padding:8px}
+  .grid{display:grid;gap:8px}
+  .row-top{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
+  .pad{padding:8px}
   label{font-size:var(--fs-sm);color:var(--muted)}
-  input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--tap);padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
+  input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
   .btn.primary{background:#2563eb;color:#fff;border-color:#1d4ed8}
   .btn.danger{background:#fee2e2;border-color:#fecaca}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
-  .toolbar{display:flex;flex-wrap:wrap;gap:8px}
-  .status{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:var(--fs-sm)}
-  .wrap{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:12px}
-  .chart-wrap{padding:8px}
-  canvas{width:100%;height:420px;display:block}
-  .list-head,.list-row{display:grid;grid-template-columns:60px 120px 1fr;gap:8px;align-items:center}
-  .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px 12px;font-weight:600;z-index:1}
-  .list{max-height:520px;overflow:auto;border-top:1px solid var(--line)}
-  .list-row{padding:8px 12px;border-bottom:1px solid var(--line);background:#fff}
-  .pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
-  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .timer{font-weight:800;font-size:22px;background:#0a0;color:#fff;padding:8px 12px;border-radius:10px;text-align:center;white-space:nowrap}
-  .yhelp{padding:10px 12px;color:#334155;background:#f8fafc;border-top:1px solid var(--line);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius)}
-  .langbar{display:flex;gap:8px;align-items:center}
-  .flagbtn{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:72px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:var(--fs-sm)}
+  .btn.small{min-height:34px;padding:6px 10px;font-size:var(--fs-sm)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:6px}
+  .status{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:var(--fs-sm)}
+  .wrap{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px}
+  .chart-wrap{padding:6px}
+  canvas{width:100%;height:360px;display:block}
+  .list-head,.list-row{display:grid;grid-template-columns:48px 96px 1fr;gap:6px;align-items:center}
+  .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:6px 8px;font-weight:600;z-index:1}
+  .list{max-height:460px;overflow:auto;border-top:1px solid var(--line)}
+  .list-row{padding:6px 8px;border-bottom:1px solid var(--line);background:#fff}
+  textarea{width:100%;min-height:36px;border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:var(--fs-sm)}
+  .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .timer{font-weight:800;font-size:16px;background:#0a0;color:#fff;padding:6px 10px;border-radius:8px;text-align:center;white-space:nowrap}
+  .langbar{display:flex;gap:6px;align-items:center}
+  .flagbtn{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:62px;padding:6px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:var(--fs-sm)}
   .flagbtn.active{background:#eef2ff;border-color:#c7d2fe}
-  .flag{font-size:22px;line-height:1}
-  .themebtn{min-width:120px}
+  .flag{font-size:18px;line-height:1}
   @media (max-width: 980px){
     .wrap{grid-template-columns:1fr}
-    canvas{height:340px}
-    .row-top{grid-template-columns:1fr}
+    canvas{height:300px}
+    .row-top{grid-template-columns:1fr auto}
   }
 </style>
 </head>
 <body>
 <div class="app">
-  <!-- Topp: process + datum + språk + tema -->
+  <!-- Topp: process + datum + språk + tema + timer -->
   <div class="row-top">
     <div class="card pad">
-      <div style="display:grid;grid-template-columns:1fr 200px;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 160px;gap:8px">
         <div>
           <label id="lblProcess">PROCESS</label>
           <input id="process" type="text" placeholder="Ange processnamn…">
@@ -65,23 +64,22 @@
           <input id="date" type="text" placeholder="yyyy-mm-dd">
         </div>
       </div>
-      <div style="margin-top:10px" class="toolbar">
-        <button id="btnStartNext" class="btn primary">Start / Next (SPACE)</button>
-        <button id="btnStop" class="btn">Stop</button>
-        <button id="btnAdd" class="btn">Lägg till tid manuellt</button>
-        <button id="btnReset" class="btn danger">Nollställ</button>
-        <button id="btnExport" class="btn">Exportera CSV (Excel ;)</button>
+      <div style="margin-top:6px" class="toolbar">
+        <button id="btnToggle" class="btn primary">Start</button>
+        <button id="btnAdd" class="btn small">+ Manuell</button>
+        <button id="btnReset" class="btn small danger">Nollställ</button>
+        <button id="btnExport" class="btn small">Export CSV</button>
         <div id="status" class="status">Status: redo.</div>
       </div>
     </div>
 
-    <div class="card pad" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+    <div class="card pad" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
       <div class="langbar" id="langbar" aria-label="Language">
         <button class="flagbtn" data-lang="en"><span class="flag">🇬🇧</span><span>English</span></button>
         <button class="flagbtn" data-lang="de"><span class="flag">🇩🇪</span><span>Deutsch</span></button>
         <button class="flagbtn active" data-lang="sv"><span class="flag">🇸🇪</span><span>Svenska</span></button>
       </div>
-      <button id="btnTheme" class="btn themebtn">Tema: Auto</button>
+      <button id="btnTheme" class="btn small">Tema: Auto</button>
       <div class="timer" id="timerDisp">00:00.00</div>
     </div>
   </div>
@@ -90,16 +88,10 @@
   <div class="wrap">
     <div class="card">
       <div class="chart-wrap">
-        <canvas id="chart" height="420"></canvas>
+        <canvas id="chart" height="360"></canvas>
       </div>
-      <div class="yhelp">
-        <ol id="olHelp" style="margin:0 0 0 18px;padding:0">
-          <li>Skala Y-axeln efter längsta cykeltiden.</li>
-          <li>Rita varje cykel som en kolumn i diagrammet.</li>
-          <li>Visa Ø CT som hel linje (orange).</li>
-          <li>Visa BRCT (medel av 5 snabbaste) som grön streckad linje (visas efter ≥5 cykler).</li>
-          <li>Beräkna störningsgrad D.</li>
-        </ol>
+      <div style="padding:6px 8px;color:#334155;background:#f8fafc;border-top:1px solid #e5e7eb;border-bottom-left-radius:10px;border-bottom-right-radius:10px;font-size:var(--fs-sm)">
+        <span id="help1">Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön streck = BRCT (5 snabbaste).</span>
       </div>
     </div>
 
@@ -111,11 +103,11 @@
       </div>
       <div id="list" class="list"></div>
 
-      <div style="padding:12px">
+      <div style="padding:8px">
         <div class="kpis">
           <div class="pill"><span id="kpiAvgLabel">Ø CT (medel):</span> <b id="kpiAvg">00:00.00</b></div>
-          <div class="pill"><span id="kpiBrctLabel">BRCT (5 snabbaste, medel):</span> <b id="kpiBrct">–</b></div>
-          <div class="pill"><span id="kpiDLabel">D (störningsgrad) %:</span> <b id="kpiD">0.0%</b></div>
+          <div class="pill"><span id="kpiBrctLabel">BRCT (5 snabbaste):</span> <b id="kpiBrct">–</b></div>
+          <div class="pill"><span id="kpiDLabel">D %:</span> <b id="kpiD">0.0%</b></div>
         </div>
       </div>
     </div>
@@ -123,100 +115,64 @@
 </div>
 
 <script>
-/* ============ i18n ============ */
+/* ===== i18n ===== */
 const L = {
-  sv:{
-    PROCESS:"PROCESS", DATE:"DATE",
-    PH_PROCESS:"Ange processnamn…", PH_DATE:"yyyy-mm-dd",
-    STARTNEXT:"Start / Next (SPACE)", STOP:"Stop", ADDMAN:"Lägg till tid manuellt", RESET:"Nollställ",
-    EXPORT:"Exportera CSV (Excel ;)", STATUS_PREFIX:"Status: ", STATUS_READY:"redo.", STATUS_MEASURE:"Mäter cykel…", STATUS_SAVED:"Cykel sparad. Mäta nästa…", STATUS_STOP:"Timer stoppad.", STATUS_RESET:"Återställd.", STATUS_EXPORTED:"CSV exporterad.",
-    HELP:[
-      "Skala Y-axeln efter längsta cykeltiden.",
-      "Rita varje cykel som en kolumn i diagrammet.",
-      "Visa Ø CT som hel linje (orange).",
-      "Visa BRCT (medel av 5 snabbaste) som grön streckad linje (visas efter ≥5 cykler).",
-      "Beräkna störningsgrad D."
-    ],
+  sv:{ PROCESS:"PROCESS", DATE:"DATE", PH_PROCESS:"Ange processnamn…", PH_DATE:"yyyy-mm-dd",
+    TOGGLE_START:"Start", TOGGLE_STOP:"Stoppa & spara", ADD:"+ Manuell", RESET:"Nollställ", EXPORT:"Export CSV",
+    STATUS_PREFIX:"Status: ", READY:"redo.", MEASURE:"Mäter…", SAVED:"Sparad.", STOPPED:"Stoppad.", RESETTED:"Återställd.",
+    HELP:"Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön streck = BRCT (5 snabbaste).",
     CYCLE:"CYCLE", TIMES:"TIME(S)", PROBLEMS:"OBSERVED PROBLEMS",
-    KPI_AVG:"Ø CT (medel):", KPI_BRCT:"BRCT (5 snabbaste, medel):", KPI_D:"D (störningsgrad) %:",
+    KPI_AVG:"Ø CT (medel):", KPI_BRCT:"BRCT (5 snabbaste):", KPI_D:"D %:",
     PROMPT_TIME:"Tid (mm:ss eller sekunder, t.ex. 02:35 eller 155.2):",
     ERR_TIME:"Ogiltig tid.",
-    THEME:"Tema", THEME_AUTO:"Tema: Auto", THEME_LIGHT:"Tema: Ljust", THEME_DARK:"Tema: Mörkt",
+    THEME_AUTO:"Tema: Auto", THEME_LIGHT:"Tema: Ljust", THEME_DARK:"Tema: Mörkt",
     CSV_DECIMAL:","
   },
-  en:{
-    PROCESS:"PROCESS", DATE:"DATE",
-    PH_PROCESS:"Enter process name…", PH_DATE:"yyyy-mm-dd",
-    STARTNEXT:"Start / Next (SPACE)", STOP:"Stop", ADDMAN:"Add time manually", RESET:"Reset",
-    EXPORT:"Export CSV (Excel ;)", STATUS_PREFIX:"Status: ", STATUS_READY:"ready.", STATUS_MEASURE:"Measuring…", STATUS_SAVED:"Cycle saved. Next…", STATUS_STOP:"Timer stopped.", STATUS_RESET:"Reset.", STATUS_EXPORTED:"CSV exported.",
-    HELP:[
-      "Scale Y-axis to the longest cycle time.",
-      "Draw each cycle as a bar.",
-      "Show Ø CT as solid line (orange).",
-      "Show BRCT (mean of 5 fastest) as green dashed line (after ≥5 cycles).",
-      "Calculate disturbance D."
-    ],
+  en:{ PROCESS:"PROCESS", DATE:"DATE", PH_PROCESS:"Enter process name…", PH_DATE:"yyyy-mm-dd",
+    TOGGLE_START:"Start", TOGGLE_STOP:"Stop & Save", ADD:"+ Manual", RESET:"Reset", EXPORT:"Export CSV",
+    STATUS_PREFIX:"Status: ", READY:"ready.", MEASURE:"Measuring…", SAVED:"Saved.", STOPPED:"Stopped.", RESETTED:"Reset.",
+    HELP:"Y-axis auto to longest cycle. Bars = cycles. Orange = Ø CT. Green dashed = BRCT (5 fastest).",
     CYCLE:"CYCLE", TIMES:"TIME(S)", PROBLEMS:"OBSERVED PROBLEMS",
-    KPI_AVG:"Ø CT (mean):", KPI_BRCT:"BRCT (5 fastest, mean):", KPI_D:"D (disturbance) %:",
+    KPI_AVG:"Ø CT (mean):", KPI_BRCT:"BRCT (5 fastest):", KPI_D:"D %:",
     PROMPT_TIME:"Time (mm:ss or seconds, e.g., 02:35 or 155.2):",
     ERR_TIME:"Invalid time.",
-    THEME:"Theme", THEME_AUTO:"Theme: Auto", THEME_LIGHT:"Theme: Light", THEME_DARK:"Theme: Dark",
-    CSV_DECIMAL:"."   // en uses dot
+    THEME_AUTO:"Theme: Auto", THEME_LIGHT:"Theme: Light", THEME_DARK:"Theme: Dark",
+    CSV_DECIMAL:"."
   },
-  de:{
-    PROCESS:"PROZESS", DATE:"DATUM",
-    PH_PROCESS:"Prozessname eingeben…", PH_DATE:"jjjj-mm-tt",
-    STARTNEXT:"Start / Next (LEERTASTE)", STOP:"Stopp", ADDMAN:"Zeit manuell hinzufügen", RESET:"Zurücksetzen",
-    EXPORT:"CSV exportieren (Excel ;)", STATUS_PREFIX:"Status: ", STATUS_READY:"bereit.", STATUS_MEASURE:"Messung…", STATUS_SAVED:"Zyklus gespeichert. Weiter…", STATUS_STOP:"Timer gestoppt.", STATUS_RESET:"Zurückgesetzt.", STATUS_EXPORTED:"CSV exportiert.",
-    HELP:[
-      "Y-Achse an die längste Zykluszeit anpassen.",
-      "Jeden Zyklus als Säule zeichnen.",
-      "Ø CT als durchgezogene Linie (orange) anzeigen.",
-      "BRCT (Mittel der 5 schnellsten) als grüne gestrichelte Linie (ab ≥5 Zyklen).",
-      "Störungsgrad D berechnen."
-    ],
+  de:{ PROCESS:"PROZESS", DATE:"DATUM", PH_PROCESS:"Prozessname eingeben…", PH_DATE:"jjjj-mm-tt",
+    TOGGLE_START:"Start", TOGGLE_STOP:"Stoppen & speichern", ADD:"+ Manuell", RESET:"Zurücksetzen", EXPORT:"CSV exportieren",
+    STATUS_PREFIX:"Status: ", READY:"bereit.", MEASURE:"Messung…", SAVED:"Gespeichert.", STOPPED:"Gestoppt.", RESETTED:"Zurückgesetzt.",
+    HELP:"Y-Achse automatisch zur längsten Zykluszeit. Balken = Zyklen. Orange = Ø CT. Grün gestrichelt = BRCT (5 schnellste).",
     CYCLE:"ZYKLUS", TIMES:"ZEIT(S)", PROBLEMS:"BEOBACHTETE PROBLEME",
-    KPI_AVG:"Ø CT (Mittel):", KPI_BRCT:"BRCT (5 schnellste, Mittel):", KPI_D:"D (Störungsgrad) %:",
+    KPI_AVG:"Ø CT (Mittel):", KPI_BRCT:"BRCT (5 schnellste):", KPI_D:"D %:",
     PROMPT_TIME:"Zeit (mm:ss oder Sekunden, z. B. 02:35 oder 155.2):",
     ERR_TIME:"Ungültige Zeit.",
-    THEME:"Thema", THEME_AUTO:"Thema: Auto", THEME_LIGHT:"Thema: Hell", THEME_DARK:"Thema: Dunkel",
-    CSV_DECIMAL:","   // de uses comma
+    THEME_AUTO:"Thema: Auto", THEME_LIGHT:"Thema: Hell", THEME_DARK:"Thema: Dunkel",
+    CSV_DECIMAL:","
   }
 };
 let lang = 'sv';
-function t(k){ return L[lang][k]; }
-function setText(){
-  // labels & buttons
-  $('#lblProcess').textContent = t('PROCESS');
-  $('#lblDate').textContent = t('DATE');
-  $('#process').placeholder = t('PH_PROCESS');
-  $('#date').placeholder = t('PH_DATE');
-  $('#btnStartNext').textContent = t('STARTNEXT');
-  $('#btnStop').textContent = t('STOP');
-  $('#btnAdd').textContent = t('ADDMAN');
-  $('#btnReset').textContent = t('RESET');
-  $('#btnExport').textContent = t('EXPORT');
-  $('#thCycle').textContent = t('CYCLE');
-  $('#thTime').textContent = t('TIMES');
-  $('#thProblems').textContent = t('PROBLEMS');
-  $('#kpiAvgLabel').textContent = t('KPI_AVG');
-  $('#kpiBrctLabel').textContent = t('KPI_BRCT');
-  $('#kpiDLabel').textContent   = t('KPI_D');
-  // help list
-  const ol = $('#olHelp'); ol.innerHTML = '';
-  L[lang].HELP.forEach(x=>{ const li=document.createElement('li'); li.textContent=x; ol.appendChild(li); });
-  // theme label
-  updateThemeLabel();
-  // status prefix stays; keep current suffix
-  const cur = statusEl.textContent.replace(/^.*?:\s*/, '');
-  statusEl.textContent = t('STATUS_PREFIX') + cur;
-  // mark active flag
+const $ = s => document.querySelector(s);
+function setLangTexts(){
+  $('#lblProcess').textContent = L[lang].PROCESS;
+  $('#lblDate').textContent = L[lang].DATE;
+  $('#process').placeholder = L[lang].PH_PROCESS;
+  $('#date').placeholder = L[lang].PH_DATE;
+  $('#btnToggle').textContent = running ? L[lang].TOGGLE_STOP : L[lang].TOGGLE_START;
+  $('#btnAdd').textContent = L[lang].ADD;
+  $('#btnReset').textContent = L[lang].RESET;
+  $('#btnExport').textContent = L[lang].EXPORT;
+  $('#help1').textContent = L[lang].HELP;
+  $('#thCycle').textContent = L[lang].CYCLE;
+  $('#thTime').textContent = L[lang].TIMES;
+  $('#thProblems').textContent = L[lang].PROBLEMS;
+  $('#kpiAvgLabel').textContent = L[lang].KPI_AVG;
+  $('#kpiBrctLabel').textContent = L[lang].KPI_BRCT;
+  $('#kpiDLabel').textContent = L[lang].KPI_D;
   document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
-  try{ localStorage.setItem('leantool_lang',lang); }catch(e){}
 }
 
-/* ============ Theme ============ */
-let theme = 'auto';
+let theme='auto';
 function applyTheme(mode){
   if(mode==='dark'){
     document.documentElement.style.setProperty('--bg','#0b1220');
@@ -228,286 +184,122 @@ function applyTheme(mode){
     document.documentElement.style.setProperty('--paper','#ffffff');
     document.documentElement.style.setProperty('--ink','#0f172a');
     document.documentElement.style.setProperty('--line','#e5e7eb');
-  }else{ // auto
-    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    applyTheme(dark?'dark':'light'); return;
+  }else{
+    applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); return;
   }
+  $('#btnTheme').textContent = theme==='auto' ? L[lang].THEME_AUTO : (theme==='light'?L[lang].THEME_LIGHT:L[lang].THEME_DARK);
 }
-function updateThemeLabel(){
-  $('#btnTheme').textContent = theme==='auto' ? t('THEME_AUTO') : (theme==='light' ? t('THEME_LIGHT') : t('THEME_DARK'));
-}
-$('#btnTheme').addEventListener('click', ()=>{
-  theme = theme==='auto'?'light':theme==='light'?'dark':'auto';
-  try{ localStorage.setItem('leantool_theme',theme); }catch(e){}
-  applyTheme(theme); updateThemeLabel();
-});
 
-/* ============ Utilities ============ */
-const $ = s => document.querySelector(s);
-const listEl = $('#list');
-const timerDisp = $('#timerDisp');
-const statusEl = $('#status');
-const chart = $('#chart');
-const ctx = chart.getContext('2d', {willReadFrequently:true});
-
-function pad(n, w=2){ return String(n).padStart(w,'0'); }
-function formatMs(ms){
-  // mm:ss.cc
-  const cs = Math.round(ms/10);
-  const m = Math.floor(cs/6000);
-  const s = Math.floor((cs%6000)/100);
-  const c = cs % 100;
-  return `${pad(m)}:${pad(s)}.${pad(c)}`;
-}
+/* ===== Helpers ===== */
+function pad(n,w=2){return String(n).padStart(w,'0')}
+function formatMs(ms){const cs=Math.round(ms/10),m=Math.floor(cs/6000),s=Math.floor((cs%6000)/100),c=cs%100; return `${pad(m)}:${pad(s)}.${pad(c)}`}
 function parseHuman(s){
-  // "mm:ss(.cc)" eller sekunder (flyttal)
-  s = (s||'').trim().replace(',', '.');
-  if(!s) return null;
+  s=(s||'').trim().replace(',', '.'); if(!s) return null;
   if(/^\d+(\.\d+)?$/.test(s)) return Math.round(parseFloat(s)*1000);
-  const m = s.match(/^(\d{1,2}):(\d{2})(?:\.(\d{1,2}))?$/);
-  if(!m) return null;
-  const mm = parseInt(m[1],10);
-  const ss = parseInt(m[2],10);
-  const cc = m[3] ? parseInt(m[3].padEnd(2,'0'),10) : 0;
-  return ((mm*60)+ss)*1000 + Math.round(cc*10);
+  const m=s.match(/^(\d{1,2}):(\d{2})(?:\.(\d{1,2}))?$/); if(!m) return null;
+  const mm=+m[1], ss=+m[2], cc=m[3]? +m[3].padEnd(2,'0'):0; return ((mm*60)+ss)*1000 + Math.round(cc*10);
 }
-function formatSecondsForCSV(ms){
-  const secs = (ms/1000).toFixed(2);
-  return lang==='en' ? secs : secs.replace('.', L[lang].CSV_DECIMAL); // sv/de = komma
-}
+function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang==='en'?secs:secs.replace('.',L[lang].CSV_DECIMAL)}
 
-/* ============ State ============ */
-let laps = [];                 // {ms:number, note:string}
-let running = false;
-let tStart = 0;
-let tickHandle = null;
+/* ===== State ===== */
+let laps=[]; // {ms,note}
+let running=false, tStart=0, tick=null;
 
-/* ============ Timer & actions ============ */
-function statusSuffix(s){ statusEl.textContent = t('STATUS_PREFIX') + s; }
-function startTimer(){
-  if(running) return;
-  running = true;
-  tStart = performance.now();
-  tickHandle = setInterval(()=>{
-    const ms = performance.now() - tStart;
-    timerDisp.textContent = formatMs(ms);
-  }, 50);
-  statusSuffix(t('STATUS_MEASURE'));
-}
-function lapAndContinue(){
-  if(!running){ startTimer(); return; }
-  const ms = Math.max(10, performance.now() - tStart);
-  addLap(ms);
-  // ny start
-  tStart = performance.now();
-  timerDisp.textContent = '00:00.00';
-  statusSuffix(t('STATUS_SAVED'));
-}
-function stopTimer(){
-  if(!running) return;
-  clearInterval(tickHandle);
-  tickHandle = null;
-  running = false;
-  statusSuffix(t('STATUS_STOP'));
-}
-function resetAll(){
-  stopTimer();
-  laps = [];
-  renderList(); drawChart(); updateKPIs();
-  timerDisp.textContent = '00:00.00';
-  statusSuffix(t('STATUS_RESET'));
-}
+/* ===== UI ===== */
+const timerDisp=$('#timerDisp'), statusEl=$('#status'), chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
+function status(s){ statusEl.textContent = L[lang].STATUS_PREFIX + s; }
 
-/* ============ Laps / list ============ */
-function addLap(ms, note=''){
-  laps.push({ms, note});
-  renderList(); drawChart(); updateKPIs();
+/* ===== Timer Toggle ===== */
+function toggle(){
+  if(!running){
+    running=true; tStart=performance.now();
+    tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
+    $('#btnToggle').textContent=L[lang].TOGGLE_STOP; status(L[lang].MEASURE);
+  }else{
+    clearInterval(tick); tick=null; running=false;
+    const ms=Math.max(10, performance.now()-tStart);
+    addLap(ms);
+    timerDisp.textContent='00:00.00';
+    $('#btnToggle').textContent=L[lang].TOGGLE_START; status(L[lang].SAVED);
+  }
 }
+$('#btnToggle').addEventListener('click', toggle);
+
+/* ===== Laps/List/Stats ===== */
+function addLap(ms,note=''){ laps.push({ms,note}); renderList(); drawChart(); updateKPIs(); }
 function renderList(){
-  listEl.innerHTML = '';
-  laps.forEach((l, i)=>{
-    const row = document.createElement('div');
-    row.className = 'list-row';
-    row.innerHTML = `
-      <div>${i+1}</div>
-      <div>${formatMs(l.ms)}</div>
-      <div><textarea data-ix="${i}" style="width:100%;min-height:42px;border:1px solid #e5e7eb;border-radius:8px;padding:8px">${l.note||''}</textarea></div>
-    `;
-    listEl.appendChild(row);
+  const list=$('#list'); list.innerHTML='';
+  laps.forEach((l,i)=>{
+    const row=document.createElement('div'); row.className='list-row';
+    row.innerHTML=`<div>${i+1}</div><div>${formatMs(l.ms)}</div><div><textarea data-ix="${i}">${l.note||''}</textarea></div>`;
+    list.appendChild(row);
   });
-  listEl.querySelectorAll('textarea').forEach(tArea=>{
-    tArea.addEventListener('input', e=>{
-      const ix = +e.target.getAttribute('data-ix');
-      laps[ix].note = e.target.value;
-    });
-  });
+  list.querySelectorAll('textarea').forEach(t=> t.addEventListener('input', e=>{ const ix=+e.target.dataset.ix; laps[ix].note=e.target.value; }));
 }
-
-/* ============ Stats (avg, BRCT, D) ============ */
-function avgMs(arr){ return arr.length? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
-function brctMs(arr){
-  if(arr.length<5) return null;
-  const copy = [...arr].sort((a,b)=>a-b).slice(0,5);
-  return avgMs(copy);
-}
+function avgMs(a){return a.length? a.reduce((x,y)=>x+y,0)/a.length:0}
+function brctMs(a){ if(a.length<5) return null; return avgMs([...a].sort((x,y)=>x-y).slice(0,5)); }
 function updateKPIs(){
-  const arr = laps.map(x=>x.ms);
-  const avg = avgMs(arr);
-  const br = brctMs(arr);
-  $('#kpiAvg').textContent  = formatMs(Math.round(avg)||0);
-  $('#kpiBrct').textContent = br!==null ? formatMs(Math.round(br)) : '–';
-  let D = 0;
-  if(avg>0 && br!==null){ D = ((avg - br) / avg) * 100; }
-  $('#kpiD').textContent = `${D.toFixed(1)}%`;
+  const arr=laps.map(x=>x.ms), avg=avgMs(arr), br=brctMs(arr);
+  $('#kpiAvg').textContent=formatMs(Math.round(avg)||0);
+  $('#kpiBrct').textContent=br!==null?formatMs(Math.round(br)):'–';
+  const D=(avg>0&&br!==null)?((avg-br)/avg*100):0; $('#kpiD').textContent=`${D.toFixed(1)}%`;
 }
 
-/* ============ Chart (bars + mean + BRCT dashed) ============ */
+/* ===== Chart ===== */
 function drawChart(){
-  const dpr = window.devicePixelRatio || 1;
-  const W = chart.clientWidth * dpr;
-  const H = chart.clientHeight * dpr;
-  chart.width = W; chart.height = H;
-  ctx.clearRect(0,0,W,H);
-
-  const padL = 70*dpr, padR = 20*dpr, padT = 20*dpr, padB = 40*dpr;
-  const innerW = W - padL - padR;
-  const innerH = H - padT - padB;
-
-  // y-scale
-  const maxMs = Math.max(10000, ...laps.map(l=>l.ms));
-  const maxS = Math.ceil(maxMs/10000)*10;
-  const msToY = ms => padT + innerH - (ms/(maxS*1000))*innerH;
-
-  // border
-  ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1*dpr;
-  ctx.strokeRect(padL, padT, innerW, innerH);
-
-  // grid & y labels each 30s
-  ctx.fillStyle = '#334155'; ctx.font = `${12*dpr}px system-ui, -apple-system, Segoe UI, Inter, Arial`;
-  for(let s=0; s<=maxS; s+=30){
-    const y = msToY(s*1000);
-    ctx.strokeStyle = s===0? '#cbd5e1' : '#e5e7eb';
-    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
-    const m = Math.floor(s/60), sec = s%60;
-    const label = `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-    ctx.fillStyle = '#475569'; ctx.textAlign='left'; ctx.textBaseline='middle';
-    ctx.fillText(label, 10*dpr, y);
-  }
-
+  const dpr=window.devicePixelRatio||1, W=chart.clientWidth*dpr, H=chart.clientHeight*dpr;
+  chart.width=W; chart.height=H; ctx.clearRect(0,0,W,H);
+  const padL=64*dpr, padR=16*dpr, padT=14*dpr, padB=34*dpr, innerW=W-padL-padR, innerH=H-padT-padB;
+  const maxMs=Math.max(10000,...laps.map(l=>l.ms)); const maxS=Math.ceil(maxMs/10000)*10; const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
+  // frame
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1*dpr; ctx.strokeRect(padL,padT,innerW,innerH);
+  // grid y/30s
+  ctx.fillStyle='#475569'; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+  for(let s=0;s<=maxS;s+=30){ const y=msToY(s*1000); ctx.strokeStyle=s===0?'#cbd5e1':'#e5e7eb'; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    const m=Math.floor(s/60), sec=s%60; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y); }
   // bars
-  const n = laps.length;
-  if(n){
-    const gap = 8*dpr;
-    const bw = Math.max(10*dpr, (innerW - gap*(n-1)) / n);
-    ctx.fillStyle = 'rgba(71,85,105,.7)';
-    laps.forEach((l, i)=>{
-      const x = padL + i*(bw+gap);
-      const y = msToY(l.ms);
-      const h = padT + innerH - y;
-      ctx.fillRect(x, y, bw, h);
-    });
+  const n=laps.length; if(n){ const gap=6*dpr, bw=Math.max(8*dpr,(innerW-gap*(n-1))/n); ctx.fillStyle='rgba(71,85,105,.75)';
+    laps.forEach((l,i)=>{ const x=padL+i*(bw+gap), y=msToY(l.ms), h=padT+innerH-y; ctx.fillRect(x,y,bw,h); });
+    // x labels
+    ctx.fillStyle='#475569'; ctx.textAlign='center'; ctx.textBaseline='top';
+    for(let i=0;i<n;i++){ const gap2=6*dpr, bw2=Math.max(8*dpr,(innerW-gap2*(n-1))/n); const x=padL+i*(bw2+gap2)+bw2/2; ctx.fillText(String(i+1), x, H-padB+6*dpr); }
   }
-
-  // mean line (orange)
-  if(laps.length){
-    const mean = avgMs(laps.map(l=>l.ms));
-    const y = msToY(mean);
-    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2*dpr;
-    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
-  }
-
-  // BRCT dashed (green)
-  if(laps.length>=5){
-    const br = brctMs(laps.map(l=>l.ms));
-    const y = msToY(br);
-    ctx.strokeStyle = '#22c55e'; ctx.setLineDash([6*dpr,6*dpr]); ctx.lineWidth = 2*dpr;
-    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  // x labels
-  ctx.fillStyle = '#475569'; ctx.textAlign='center'; ctx.textBaseline='top';
-  const gap = 8*dpr;
-  const bw = n? Math.max(10*dpr, (innerW - gap*(n-1)) / n) : 10*dpr;
-  for(let i=0;i<n;i++){
-    const x = padL + i*(bw+gap) + bw/2;
-    ctx.fillText(String(i+1), x, H-padB+8*dpr);
-  }
+  // mean line
+  if(laps.length){ const mean=avgMs(laps.map(l=>l.ms)); const y=msToY(mean); ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+  // BRCT
+  if(laps.length>=5){ const br=brctMs(laps.map(l=>l.ms)); const y=msToY(br); ctx.strokeStyle='#22c55e'; ctx.setLineDash([5*dpr,5*dpr]); ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); ctx.setLineDash([]); }
 }
 
-/* ============ Events ============ */
-document.getElementById('btnStartNext').addEventListener('click', lapAndContinue);
-document.getElementById('btnStop').addEventListener('click', stopTimer);
-document.getElementById('btnReset').addEventListener('click', resetAll);
-document.getElementById('btnAdd').addEventListener('click', ()=>{
-  const s = prompt(t('PROMPT_TIME'),'');
-  const ms = parseHuman(s);
-  if(ms==null || !isFinite(ms) || ms<=0){ alert(t('ERR_TIME')); return; }
-  addLap(ms, '');
-  statusSuffix(t('STATUS_SAVED'));
+/* ===== Buttons ===== */
+$('#btnAdd').addEventListener('click', ()=>{
+  const s=prompt(L[lang].PROMPT_TIME,''); const ms=parseHuman(s);
+  if(ms==null || !isFinite(ms) || ms<=0){ alert(L[lang].ERR_TIME); return; }
+  addLap(ms); status(L[lang].SAVED);
 });
-document.getElementById('btnExport').addEventListener('click', exportCSV);
-
-// keyboard: Space=Start/Next, S=Stop, R=Reset
-document.addEventListener('keydown', e=>{
-  if(e.code==='Space'){ e.preventDefault(); lapAndContinue(); }
-  if(e.key==='s' || e.key==='S') stopTimer();
-  if(e.key==='r' || e.key==='R') resetAll();
+$('#btnReset').addEventListener('click', ()=>{
+  if(running){ toggle(); } laps=[]; renderList(); drawChart(); updateKPIs(); status(L[lang].RESETTED); timerDisp.textContent='00:00.00';
+});
+$('#btnExport').addEventListener('click', ()=>{
+  const headers=['Process','Date','Cycle','Time_mm:ss.cc','Time_s','Observed_problems'];
+  const proc=$('#process').value||'', dat=$('#date').value||'';
+  const rows=laps.map((l,i)=>[`"${proc}"` , `"${dat}"`, `"${i+1}"`, `"${formatMs(l.ms)}"`, `"${formatSecondsForCSV(l.ms)}"`, `"${(l.note||'').replaceAll('"','""')}"`].join(';'));
+  const csv=headers.join(';')+'\r\n'+rows.join('\r\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); a.href=URL.createObjectURL(blob); a.download=`20-cycle-check_${ts}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  status(L[lang].SAVED);
 });
 
-// language buttons
-document.querySelectorAll('#langbar .flagbtn').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    lang = b.dataset.lang;
-    try{ localStorage.setItem('leantool_lang',lang); }catch(e){}
-    setText();
-  });
-});
+/* ===== Language & Theme ===== */
+document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.addEventListener('click', ()=>{ lang=b.dataset.lang; try{localStorage.setItem('leantool_lang',lang)}catch{}; setLangTexts(); }));
+$('#btnTheme').addEventListener('click', ()=>{ theme=theme==='auto'?'light':theme==='light'?'dark':'auto'; try{localStorage.setItem('leantool_theme',theme)}catch{}; applyTheme(theme) });
 
-/* ============ CSV export (semicolon; decimal by language) ============ */
-function exportCSV(){
-  const headers = [
-    'Process','Date','Cycle','Time_mm:ss.cc','Time_s','Observed_problems'
-  ];
-  const proc = $('#process').value || '';
-  const dat  = $('#date').value || '';
-  const rows = laps.map((l,i)=>{
-    const tmm = formatMs(l.ms);
-    const ts  = formatSecondsForCSV(l.ms); // decimal char per lang
-    const note = (l.note||'').replaceAll('"','""');
-    const cells = [proc, dat, String(i+1), tmm, ts, note];
-    return cells.map(x=>`"${x}"`).join(';');
-  });
-  const csv = headers.join(';')+'\r\n'+rows.join('\r\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  a.href = URL.createObjectURL(blob);
-  a.download = `20-cycle-check_${ts}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  statusSuffix(t('STATUS_EXPORTED'));
-}
-
-/* ============ Init ============ */
+/* ===== Init ===== */
 (function init(){
-  // språk & tema från localStorage
-  try{ lang = localStorage.getItem('leantool_lang') || (navigator.language||'sv').slice(0,2); if(!L[lang]) lang='sv'; }catch(e){}
-  try{ theme = localStorage.getItem('leantool_theme') || 'auto'; }catch(e){}
-  applyTheme(theme); updateThemeLabel(); setText();
-
-  // dagens datum default
-  const d = new Date();
-  const yyyy = d.getFullYear(), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
-  $('#date').value = `${yyyy}-${mm}-${dd}`;
-
-  // draw empty chart
+  try{ lang = localStorage.getItem('leantool_lang') || (navigator.language||'sv').slice(0,2); if(!L[lang]) lang='sv'; }catch{}
+  try{ theme = localStorage.getItem('leantool_theme') || 'auto'; }catch{}
+  applyTheme(theme); setLangTexts();
+  const d=new Date(); $('#date').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   drawChart();
-
-  // orientering → bara rita om (diagram får mer höjd i liggande)
   window.addEventListener('resize', drawChart);
-  window.addEventListener('orientationchange', ()=>{ setTimeout(drawChart, 200); });
-  statusSuffix(t('STATUS_READY'));
 })();
 </script>
 </body>
