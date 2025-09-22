@@ -1,615 +1,371 @@
 <!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8">
-  <title>Leantool – Process Observation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="format-detection" content="telephone=no">
-  <style>
-    :root{
-      --bg: #f6f7f9;
-      --paper: #ffffff;
-      --ink: #0f172a;
-      --muted: #6b7280;
-      --line: #e5e7eb;
-      --accent: #2563eb;
-      --radius: 16px;
-      --tap: 48px;
-      --vh: 1vh;
-      --safe-top: env(safe-area-inset-top);
-      --safe-bottom: env(safe-area-inset-bottom);
-      --safe-left: env(safe-area-inset-left);
-      --safe-right: env(safe-area-inset-right);
-      --fs: clamp(15px, 2.6vw, 16px);
-      --fs-sm: clamp(12px, 2vw, 14px);
-      --fs-lg: clamp(16px, 3vw, 18px);
-    }
-    *,*::before,*::after{ box-sizing:border-box; }
-    html,body{ height:100%; margin:0; }
-    body{
-      font-family: system-ui, -apple-system, Segoe UI, Inter, Arial, sans-serif;
-      font-size: var(--fs);
-      background: var(--bg);
-      color: var(--ink);
-      -webkit-text-size-adjust: 100%;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .app{
-      min-height: calc(var(--vh) * 100);
-      display:grid;
-      grid-template-rows: auto 1fr auto;
-      padding-left: max(12px,var(--safe-left));
-      padding-right: max(12px,var(--safe-right));
-    }
-    header.appbar{
-      position: sticky; top:0; z-index:50;
-      display:flex; align-items:center; gap:10px;
-      padding: calc(8px + var(--safe-top)) 4px 8px 4px;
-      background: rgba(255,255,255,.9);
-      backdrop-filter: blur(8px);
-      border-bottom:1px solid var(--line);
-    }
-    .title{ font-weight:700; letter-spacing:.2px; padding-left:6px; }
-    .spacer{ flex:1; }
-    .iconbtn, .btn{
-      display:inline-flex; align-items:center; justify-content:center;
-      min-height: var(--tap); padding:10px 14px; border-radius:12px;
-      border:1px solid var(--line); background:#fff; gap:8px;
-      box-shadow:0 1px 1px rgba(0,0,0,.03);
-      color:inherit; text-decoration:none; cursor:pointer;
-    }
-    .btn.primary{ background:var(--accent); color:#fff; border-color:transparent; }
-    .muted{ color:var(--muted); font-size:var(--fs-sm); }
-    main{ padding:12px 0; overflow:hidden; }
-    .view{ display:none; height:100%; }
-    .view.active{ display:block; }
-    .scroll{
-      height: calc((var(--vh) * 100) - 64px - 72px - var(--safe-top) - var(--safe-bottom));
-      overflow:auto; padding-bottom:10px;
-    }
-    .card{
-      background:var(--paper); border:1px solid var(--line);
-      border-radius:var(--radius); padding:12px; margin-bottom:12px;
-      box-shadow:0 1px 1px rgba(0,0,0,.02);
-    }
-    .hstack{ display:flex; align-items:center; gap:8px; }
-    .vstack{ display:flex; flex-direction:column; gap:8px; }
-    .grid{ display:grid; gap:10px; }
-    .grid-2{ grid-template-columns: 1fr 1fr; }
-    .grid-3{ grid-template-columns: 1fr 1fr 1fr; }
-    label{ font-size:var(--fs-sm); color:var(--muted); }
-    input, select, textarea{
-      width:100%; padding:10px 12px; border:1px solid var(--line);
-      border-radius:12px; background:#fff; font:inherit;
-    }
-    textarea{ min-height:80px; resize:vertical; }
-    .pill{ padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:#fff; font-size:var(--fs-sm); }
-    .chip-row{ display:flex; gap:8px; overflow:auto; padding-bottom:2px; }
-    .chip{ flex:0 0 auto; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:#fff; font-size:var(--fs-sm); }
-    .chip.active{ background:#eef2ff; border-color:#c7d2fe; }
-    .langbar{ display:flex; gap:8px; }
-    .flagbtn{
-      display:flex; flex-direction:column; align-items:center; gap:4px;
-      min-width:72px; padding:8px; border:1px solid var(--line); border-radius:12px;
-      background:#fff;
-    }
-    .flagbtn.active{ background:#eef2ff; border-color:#c7d2fe; }
-    .flag{ font-size:22px; line-height:1; }
-    .task{
-      background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; display:grid; gap:6px;
-    }
-    .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:var(--radius); background:#fff; }
-    table{ border-collapse:collapse; width:920px; max-width:none; font-size:var(--fs-sm); }
-    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; }
-    th{ position:sticky; top:0; background:#f8fafc; z-index:1; }
-    .bottombar{
-      position:sticky; bottom:0; z-index:50;
-      padding:8px 0 calc(8px + var(--safe-bottom));
-      background:rgba(255,255,255,.95); backdrop-filter:blur(8px);
-      border-top:1px solid var(--line);
-    }
-    .tabs{ display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; }
-    .tab{
-      min-height: calc(var(--tap) - 8px);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:4px; border-radius:12px; border:1px solid transparent; font-size:var(--fs-sm); padding:6px;
-    }
-    .tab.active{ background:#eef2ff; border-color:#c7d2fe; }
-    canvas{ width:100%; height:50vh; display:block; }
-    @media (min-width:768px){
-      .scroll{ height: calc((var(--vh) * 100) - 72px - 80px); }
-      table{ width:100%; max-width:100%; }
-    }
-  </style>
+<meta charset="utf-8">
+<title>20-Cycle-Check — Process Observation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#ffffff">
+<style>
+  :root{
+    --bg:#f7f7f9; --paper:#ffffff; --ink:#0f172a; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb;
+    --radius:12px; --tap:44px; --vh:1vh; --fs:clamp(14px,2.3vw,16px); --fs-sm:clamp(12px,2vw,14px);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{font-family:system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;font-size:var(--fs);background:var(--bg);color:var(--ink)}
+  .app{min-height:100%;padding:12px}
+  .row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 1px rgba(0,0,0,.02)}
+  .pad{padding:12px}
+  label{font-size:var(--fs-sm);color:var(--muted)}
+  input[type=text],input[type=date]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--tap);padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
+  .btn.primary{background:#2563eb;color:#fff;border-color:#1d4ed8}
+  .btn.danger{background:#fee2e2;border-color:#fecaca}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px}
+  .status{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:var(--fs-sm)}
+  .wrap{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:12px}
+  .chart-wrap{padding:8px}
+  canvas{width:100%;height:420px;display:block}
+  .list-head,.list-row{display:grid;grid-template-columns:48px 120px 1fr;gap:8px;align-items:center}
+  .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px 12px;font-weight:600;z-index:1}
+  .list{max-height:520px;overflow:auto;border-top:1px solid var(--line)}
+  .list-row{padding:8px 12px;border-bottom:1px solid var(--line);background:#fff}
+  .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .timer{font-weight:800;font-size:22px;background:#0a0; color:#fff; padding:8px 12px;border-radius:10px; text-align:center}
+  .yhelp{padding:10px 12px;color:#334155;background:#f8fafc;border-top:1px solid var(--line);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius)}
+  /* Mobil */
+  @media (max-width: 900px){
+    .wrap{grid-template-columns:1fr}
+    canvas{height:320px}
+    .row{grid-template-columns:1fr;align-items:stretch}
+    .timer{order:-1}
+  }
+</style>
 </head>
 <body>
-  <div class="app">
-    <header class="appbar">
-      <div class="title">Leantool</div>
-      <div class="spacer"></div>
-      <div class="langbar" id="langbar" aria-label="Language">
-        <button class="flagbtn" data-lang="en"><span class="flag">🇬🇧</span><span>English</span></button>
-        <button class="flagbtn" data-lang="de"><span class="flag">🇩🇪</span><span>Deutsch</span></button>
-        <button class="flagbtn active" data-lang="sv"><span class="flag">🇸🇪</span><span>Svenska</span></button>
-      </div>
-    </header>
-
-    <main>
-      <!-- Observation view (portrait default) -->
-      <section id="view-observe" class="view active" aria-label="Observe">
-        <div class="scroll">
-          <div class="card vstack">
-            <strong data-t="hdr_observation">Processobservation</strong>
-            <div class="grid grid-2">
-              <div>
-                <label data-t="lbl_line">Lina</label>
-                <input id="line" placeholder="Fabrik 60 – Fräs 2">
-              </div>
-              <div>
-                <label data-t="lbl_observer">Observatör</label>
-                <input id="observer" placeholder="Namn">
-              </div>
-              <div>
-                <label data-t="lbl_product">Produkt/Order</label>
-                <input id="product" placeholder="Artikel/Order">
-              </div>
-              <div>
-                <label data-t="lbl_cycle">Mål-cykeltid (s)</label>
-                <input id="ctTarget" type="number" min="0" inputmode="numeric" placeholder="t.ex. 45">
-              </div>
-            </div>
-            <div class="chip-row" id="catRow" aria-label="Category">
-              <button class="chip active" data-cat="Process" data-t="cat_process">Process</button>
-              <button class="chip" data-cat="Wait" data-t="cat_wait">Väntan</button>
-              <button class="chip" data-cat="Walk" data-t="cat_walk">Gång</button>
-              <button class="chip" data-cat="Other" data-t="cat_other">Övrigt</button>
-            </div>
-            <div class="grid">
-              <div>
-                <label data-t="lbl_note">Notering</label>
-                <textarea id="note" placeholder=""></textarea>
-              </div>
-            </div>
-            <div class="hstack" style="gap:10px; flex-wrap:wrap;">
-              <button class="btn primary" id="btnStart"><span data-t="btn_start">Starta aktivitet</span></button>
-              <button class="btn" id="btnStop" disabled><span data-t="btn_stop">Stoppa & spara</span></button>
-              <button class="btn" id="btnAddManual"><span data-t="btn_addmanual">Lägg till manuellt</span></button>
-              <button class="btn" id="btnSwitch"><span data-t="btn_switch">Visa diagram</span></button>
-            </div>
-            <div class="muted" id="timerText">00:00</div>
-          </div>
-
-          <div class="card vstack">
-            <strong data-t="hdr_summary">Sammanfattning</strong>
-            <div class="grid grid-3">
-              <div class="pill"><span data-t="sum_total">Total tid</span>: <b id="sumTotal">0s</b></div>
-              <div class="pill"><span data-t="sum_ct">Cykeltid</span>: <b id="sumCT">0s</b></div>
-              <div class="pill"><span data-t="sum_eff">Andel värde</span>: <b id="sumValue">0%</b></div>
-            </div>
-          </div>
-
-          <div class="card vstack">
-            <strong data-t="hdr_log">Logg</strong>
-            <div class="table-wrap">
-              <table id="logTable">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th data-t="th_time">Tid</th>
-                    <th data-t="th_cat">Kategori</th>
-                    <th data-t="th_dur">Sekunder</th>
-                    <th data-t="th_note">Notering</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-            <div class="hstack" style="gap:10px; flex-wrap:wrap;">
-              <button class="btn" id="btnClearLog"><span data-t="btn_clear">Rensa logg</span></button>
-              <button class="btn" id="btnExport"><span data-t="btn_export">Exportera CSV</span></button>
-              <button class="btn" id="btnTheme"><span data-t="btn_theme">Tema: Auto</span></button>
-            </div>
-          </div>
+<div class="app">
+  <!-- Top row -->
+  <div class="row">
+    <div class="card pad">
+      <div style="display:grid;grid-template-columns:1fr 200px;gap:12px">
+        <div>
+          <label>PROCESS</label>
+          <input id="process" type="text" placeholder="Ange processnamn…">
         </div>
-      </section>
-
-      <!-- Chart view (shown on landscape or on demand) -->
-      <section id="view-chart" class="view" aria-label="Chart">
-        <div class="scroll">
-          <div class="card vstack">
-            <strong data-t="hdr_chart">Diagram – kategoriandelar</strong>
-            <canvas id="chart" height="300"></canvas>
-            <div class="muted" data-t="chart_hint">Tips: Vänd telefonen till liggande för större diagram.</div>
-            <div class="hstack" style="gap:10px; flex-wrap:wrap;">
-              <button class="btn" id="btnBack"><span data-t="btn_back">Tillbaka</span></button>
-              <button class="btn" id="btnExport2"><span data-t="btn_export">Exportera CSV</span></button>
-            </div>
-          </div>
+        <div>
+          <label>DATE</label>
+          <input id="date" type="text" placeholder="yyyy-mm-dd">
         </div>
-      </section>
-    </main>
-
-    <nav class="bottombar">
-      <div class="tabs">
-        <button class="tab active" data-target="observe"><span data-t="tab_observe">Observera</span></button>
-        <button class="tab" data-target="chart"><span data-t="tab_chart">Diagram</span></button>
-        <button class="tab" data-target="export"><span data-t="tab_export">Export</span></button>
-        <button class="tab" data-target="theme"><span data-t="tab_theme">Tema</span></button>
       </div>
-    </nav>
+      <div style="margin-top:10px" class="toolbar">
+        <button id="btnStartNext" class="btn primary">Start / Next (SPACE)</button>
+        <button id="btnStop" class="btn">Stop</button>
+        <button id="btnAdd" class="btn">Lägg till tid manuellt</button>
+        <button id="btnReset" class="btn danger">Nollställ</button>
+        <button id="btnExport" class="btn">Exportera CSV (Excel ;)</button>
+        <div id="status" class="status">Status: redo.</div>
+      </div>
+    </div>
+    <div class="timer" id="timerDisp">00:00.00</div>
   </div>
 
-  <script>
-    // ===== iOS 100vh-fix =====
-    function setVH(){
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    }
-    setVH(); window.addEventListener('resize', setVH); window.addEventListener('orientationchange', setVH);
+  <!-- Middle: Chart + List -->
+  <div class="wrap">
+    <div class="card">
+      <div class="chart-wrap">
+        <canvas id="chart" height="420"></canvas>
+      </div>
+      <div class="yhelp">
+        <ol style="margin:0 0 0 18px;padding:0">
+          <li>Skala Y-axeln efter längsta cykeltiden.</li>
+          <li>Rita varje cykel som en kolumn.</li>
+          <li>Visa Ø CT som hel linje (orange).</li>
+          <li>Visa BRCT (snitt av 5 kortaste) som grön streckad linje (visas efter ≥5 cykler).</li>
+          <li>Beräkna störningsgrad D.</li>
+        </ol>
+      </div>
+    </div>
 
-    // ===== State =====
-    const log = [];
-    let running = null; // {start:Date, cat:string, note:string}
-    let tickInt = null;
-    const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    <div class="card pad">
+      <div class="list-head">
+        <div>CYCLE</div>
+        <div>TIME(S)</div>
+        <div>OBSERVED PROBLEMS</div>
+      </div>
+      <div id="list" class="list"></div>
 
-    // ===== Language packs =====
-    const L = {
-      sv:{
-        hdr_observation:"Processobservation",
-        lbl_line:"Lina",
-        lbl_observer:"Observatör",
-        lbl_product:"Produkt/Order",
-        lbl_cycle:"Mål-cykeltid (s)",
-        cat_process:"Process",
-        cat_wait:"Väntan",
-        cat_walk:"Gång",
-        cat_other:"Övrigt",
-        lbl_note:"Notering",
-        btn_start:"Starta aktivitet",
-        btn_stop:"Stoppa & spara",
-        btn_addmanual:"Lägg till manuellt",
-        btn_switch:"Visa diagram",
-        hdr_summary:"Sammanfattning",
-        sum_total:"Total tid",
-        sum_ct:"Cykeltid",
-        sum_eff:"Andel värde",
-        hdr_log:"Logg",
-        th_time:"Tid",
-        th_cat:"Kategori",
-        th_dur:"Sekunder",
-        th_note:"Notering",
-        btn_clear:"Rensa logg",
-        btn_export:"Exportera CSV",
-        btn_theme:"Tema: Auto",
-        hdr_chart:"Diagram – kategoriandelar",
-        chart_hint:"Tips: Vänd telefonen till liggande för större diagram.",
-        btn_back:"Tillbaka",
-        tab_observe:"Observera",
-        tab_chart:"Diagram",
-        tab_export:"Export",
-        tab_theme:"Tema",
-      },
-      en:{
-        hdr_observation:"Process Observation",
-        lbl_line:"Line",
-        lbl_observer:"Observer",
-        lbl_product:"Product/Order",
-        lbl_cycle:"Target Cycle Time (s)",
-        cat_process:"Process",
-        cat_wait:"Waiting",
-        cat_walk:"Walking",
-        cat_other:"Other",
-        lbl_note:"Note",
-        btn_start:"Start Activity",
-        btn_stop:"Stop & Save",
-        btn_addmanual:"Add Manually",
-        btn_switch:"Show Chart",
-        hdr_summary:"Summary",
-        sum_total:"Total Time",
-        sum_ct:"Cycle Time",
-        sum_eff:"Value-Add %",
-        hdr_log:"Log",
-        th_time:"Time",
-        th_cat:"Category",
-        th_dur:"Seconds",
-        th_note:"Note",
-        btn_clear:"Clear Log",
-        btn_export:"Export CSV",
-        btn_theme:"Theme: Auto",
-        hdr_chart:"Chart – Category Shares",
-        chart_hint:"Tip: Rotate to landscape for a bigger chart.",
-        btn_back:"Back",
-        tab_observe:"Observe",
-        tab_chart:"Chart",
-        tab_export:"Export",
-        tab_theme:"Theme",
-      },
-      de:{
-        hdr_observation:"Prozessbeobachtung",
-        lbl_line:"Linie",
-        lbl_observer:"Beobachter",
-        lbl_product:"Produkt/Auftrag",
-        lbl_cycle:"Soll-Taktzeit (s)",
-        cat_process:"Prozess",
-        cat_wait:"Warten",
-        cat_walk:"Gehen",
-        cat_other:"Sonstiges",
-        lbl_note:"Notiz",
-        btn_start:"Aktivität starten",
-        btn_stop:"Stoppen & speichern",
-        btn_addmanual:"Manuell hinzufügen",
-        btn_switch:"Diagram anzeigen",
-        hdr_summary:"Zusammenfassung",
-        sum_total:"Gesamtzeit",
-        sum_ct:"Taktzeit",
-        sum_eff:"Wertschöpfend %",
-        hdr_log:"Protokoll",
-        th_time:"Zeit",
-        th_cat:"Kategorie",
-        th_dur:"Sekunden",
-        th_note:"Notiz",
-        btn_clear:"Protokoll leeren",
-        btn_export:"CSV exportieren",
-        btn_theme:"Thema: Auto",
-        hdr_chart:"Diagramm – Kategorienanteile",
-        chart_hint:"Tipp: Für größeres Diagramm ins Querformat drehen.",
-        btn_back:"Zurück",
-        tab_observe:"Beobachten",
-        tab_chart:"Diagramm",
-        tab_export:"Export",
-        tab_theme:"Thema",
-      }
-    };
-    let lang = 'sv';
-    function applyLang(){
-      const dict = L[lang];
-      $$('[data-t]').forEach(el=>{
-        const k = el.getAttribute('data-t');
-        if(dict[k] !== undefined) el.textContent = dict[k];
-      });
-      // Placeholder tweaks (optional)
-      $('#note').placeholder = (lang==='sv'?'Kort notering…':lang==='de'?'Kurze Notiz…':'Short note…');
-      $('#line').placeholder = (lang==='sv'?'Fabrik 60 – Fräs 2':lang==='de'?'Werk 60 – Fräse 2':'Factory 60 – Mill 2');
-      $('#observer').placeholder = (lang==='sv'?'Namn':lang==='de'?'Name':'Name');
-      $('#product').placeholder = (lang==='sv'?'Artikel/Order':lang==='de'?'Artikel/Auftrag':'Item/Order');
-      $('#btnTheme').textContent = L[lang].btn_theme;
-      // mark active flag
-      $$('#langbar .flagbtn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
-      try{ localStorage.setItem('leantool_lang', lang); }catch(e){}
-      render(); drawChart();
-    }
+      <div style="padding:12px">
+        <div class="kpis">
+          <div class="pill">Ø CT (medel): <b id="kpiAvg">00:00.00</b></div>
+          <div class="pill">BRCT (5 snabbaste, medel): <b id="kpiBrct">–</b></div>
+          <div class="pill">D (störningsgrad) %: <b id="kpiD">0.0%</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    // ===== Theme =====
-    function applyTheme(mode){
-      if(mode==='dark'){
-        document.documentElement.style.setProperty('--bg','#0b1220');
-        document.documentElement.style.setProperty('--paper','#0f172a');
-        document.documentElement.style.setProperty('--ink','#e5e7eb');
-        document.documentElement.style.setProperty('--line','#1f2937');
-      }else if(mode==='light'){
-        document.documentElement.style.setProperty('--bg','#f6f7f9');
-        document.documentElement.style.setProperty('--paper','#ffffff');
-        document.documentElement.style.setProperty('--ink','#0f172a');
-        document.documentElement.style.setProperty('--line','#e5e7eb');
-      }else{ // auto
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        applyTheme(dark?'dark':'light');
-        return;
-      }
-    }
-    let theme = 'auto';
-    function cycleTheme(){
-      theme = theme==='auto'?'light':theme==='light'?'dark':'auto';
-      try{ localStorage.setItem('leantool_theme', theme); }catch(e){}
-      applyTheme(theme);
-      $('#btnTheme').textContent = (L[lang].btn_theme).replace('Auto', theme.charAt(0).toUpperCase()+theme.slice(1));
-    }
+<script>
+/* ===== Utilities ===== */
+const $ = s => document.querySelector(s);
+const listEl = $('#list');
+const timerDisp = $('#timerDisp');
+const statusEl = $('#status');
+const chart = $('#chart');
+const ctx = chart.getContext('2d', {willReadFrequently:true});
 
-    // ===== Timer & logging =====
-    const catRow = $('#catRow');
-    catRow.addEventListener('click', e=>{
-      const c = e.target.closest('.chip'); if(!c) return;
-      $$('#catRow .chip').forEach(x=>x.classList.remove('active'));
-      c.classList.add('active');
+function pad(n, w=2){ return String(n).padStart(w,'0'); }
+function formatMs(ms){
+  // mm:ss.cc (centisekunder)
+  const cs = Math.round(ms/10);
+  const m = Math.floor(cs/6000);
+  const s = Math.floor((cs%6000)/100);
+  const c = cs % 100;
+  return `${pad(m)}:${pad(s)}.${pad(c)}`;
+}
+function parseHuman(s){
+  // "mm:ss" eller "mm:ss.cc" eller sekunder (flyttal)
+  s = (s||'').trim().replace(',', '.');
+  if(!s) return null;
+  if(/^\d+(\.\d+)?$/.test(s)) return Math.round(parseFloat(s)*1000);
+  const m = s.match(/^(\d{1,2}):(\d{2})(?:\.(\d{1,2}))?$/);
+  if(!m) return null;
+  const mm = parseInt(m[1],10);
+  const ss = parseInt(m[2],10);
+  const cc = m[3] ? parseInt(m[3].padEnd(2,'0'),10) : 0;
+  return ((mm*60)+ss)*1000 + Math.round(cc*10);
+}
+
+/* ===== State ===== */
+let laps = [];                 // {ms:number, note:string}
+let running = false;
+let tStart = 0;
+let tickHandle = null;
+
+/* ===== Timer ===== */
+function startTimer(){
+  if(running) return;
+  running = true;
+  tStart = performance.now();
+  tickHandle = setInterval(()=>{
+    const ms = performance.now() - tStart;
+    timerDisp.textContent = formatMs(ms);
+  }, 50);
+  status('Mäter cykel…');
+}
+function lapAndContinue(){
+  if(!running){ startTimer(); return; }
+  const ms = Math.max(10, performance.now() - tStart);
+  addLap(ms);
+  // ny start
+  tStart = performance.now();
+  timerDisp.textContent = '00:00.00';
+  status('Cykel sparad. Mäta nästa…');
+}
+function stopTimer(){
+  if(!running) return;
+  clearInterval(tickHandle);
+  tickHandle = null;
+  running = false;
+  status('Timer stoppad.');
+}
+function resetAll(){
+  stopTimer();
+  laps = [];
+  renderList();
+  drawChart();
+  updateKPIs();
+  timerDisp.textContent = '00:00.00';
+  status('Återställd.');
+}
+
+/* ===== Laps ===== */
+function addLap(ms, note=''){
+  laps.push({ms, note});
+  renderList();
+  drawChart();
+  updateKPIs();
+}
+
+/* ===== UI: listan ===== */
+function renderList(){
+  listEl.innerHTML = '';
+  laps.forEach((l, i)=>{
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `
+      <div>${i+1}</div>
+      <div>${formatMs(l.ms)}</div>
+      <div><textarea data-ix="${i}" style="width:100%;min-height:42px;border:1px solid #e5e7eb;border-radius:8px;padding:8px">${l.note||''}</textarea></div>
+    `;
+    listEl.appendChild(row);
+  });
+  listEl.querySelectorAll('textarea').forEach(t=>{
+    t.addEventListener('input', e=>{
+      const ix = +e.target.getAttribute('data-ix');
+      laps[ix].note = e.target.value;
     });
-    const btnStart = $('#btnStart'), btnStop = $('#btnStop'), btnAddManual = $('#btnAddManual');
-    const timerText = $('#timerText');
-    function fmtSec(s){ const m=Math.floor(s/60), r=s%60; return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
-    function nowStr(){ const d=new Date(); return d.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+  });
+}
 
-    btnStart.addEventListener('click', ()=>{
-      if(running) return;
-      const cat = $('#catRow .chip.active')?.dataset.cat || 'Process';
-      running = { start: new Date(), cat, note: $('#note').value.trim() };
-      btnStart.disabled = true; btnStop.disabled = false;
-      tickInt = setInterval(()=>{
-        const sec = Math.floor((new Date()-running.start)/1000);
-        timerText.textContent = fmtSec(sec);
-      }, 250);
+/* ===== Stats (avg, BRCT, D) ===== */
+function avgMs(arr){ return arr.length? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function brctMs(arr){
+  if(arr.length<5) return null;
+  const copy = [...arr].sort((a,b)=>a-b).slice(0,5);
+  return avgMs(copy);
+}
+function updateKPIs(){
+  const arr = laps.map(x=>x.ms);
+  const avg = avgMs(arr);
+  const br = brctMs(arr);
+  $('#kpiAvg').textContent = formatMs(Math.round(avg)||0);
+  $('#kpiBrct').textContent = br!==null ? formatMs(Math.round(br)) : '–';
+  let D = 0;
+  if(avg>0 && br!==null){
+    D = ( (avg - br) / avg ) * 100;
+  }
+  $('#kpiD').textContent = `${D.toFixed(1)}%`;
+}
+
+/* ===== Chart (bars + mean + BRCT dashed) ===== */
+function drawChart(){
+  const dpr = window.devicePixelRatio || 1;
+  const W = chart.clientWidth * dpr;
+  const H = chart.clientHeight * dpr;
+  chart.width = W; chart.height = H;
+  ctx.clearRect(0,0,W,H);
+
+  // padding och skala
+  const padL = 60*dpr, padR = 20*dpr, padT = 20*dpr, padB = 40*dpr;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  // y-skala efter längsta cykel (min 10s)
+  const maxMs = Math.max(10000, ...laps.map(l=>l.ms));
+  // runda upp till närmsta 10 sek
+  const maxS = Math.ceil(maxMs/10000)*10;
+  const msToY = ms => padT + innerH - (ms/(maxS*1000))*innerH;
+
+  // rita ram
+  ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1*dpr;
+  ctx.strokeRect(padL, padT, innerW, innerH);
+
+  // y-ticks var 30:e sekund
+  ctx.fillStyle = '#334155'; ctx.font = `${12*dpr}px system-ui, -apple-system, Segoe UI, Inter, Arial`;
+  for(let s=0; s<=maxS; s+=30){
+    const y = msToY(s*1000);
+    ctx.strokeStyle = s===0? '#cbd5e1' : '#e5e7eb';
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
+    // label mm:ss
+    const m = Math.floor(s/60), sec = s%60;
+    const label = `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    ctx.fillStyle = '#475569';
+    ctx.fillText(label, 10*dpr, y+4*dpr);
+  }
+
+  // bars
+  const n = laps.length;
+  if(n){
+    const gap = 8*dpr;
+    const bw = Math.max(10*dpr, (innerW - gap*(Math.max(n,1)-1)) / Math.max(n,1));
+    ctx.fillStyle = 'rgba(71,85,105,.7)';
+    laps.forEach((l, i)=>{
+      const x = padL + i*(bw+gap);
+      const y = msToY(l.ms);
+      const h = padT + innerH - y;
+      ctx.fillRect(x, y, bw, h);
     });
+  }
 
-    btnStop.addEventListener('click', ()=>{
-      if(!running) return;
-      clearInterval(tickInt);
-      const end = new Date();
-      const dur = Math.max(1, Math.floor((end - running.start)/1000));
-      log.push({ t: nowStr(), cat: running.cat, sec: dur, note: running.note });
-      running = null; btnStart.disabled = false; btnStop.disabled = true;
-      timerText.textContent = '00:00'; $('#note').value='';
-      persist(); render(); drawChart();
-    });
+  // mean line (orange)
+  if(laps.length){
+    const mean = avgMs(laps.map(l=>l.ms));
+    const y = msToY(mean);
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2*dpr;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
+  }
 
-    btnAddManual.addEventListener('click', ()=>{
-      const cat = prompt((lang==='sv'?'Kategori (Process/Wait/Walk/Other):':lang==='de'?'Kategorie (Prozess/Warten/Gehen/Sonstiges):':'Category (Process/Wait/Walk/Other):') ,'Process') || 'Process';
-      const sec = Number(prompt(lang==='sv'?'Sekunder:':lang==='de'?'Sekunden:':'Seconds:','10')||'0');
-      const note = prompt(lang==='sv'?'Notering:':lang==='de'?'Notiz:':'Note:','')||'';
-      if(sec>0) { log.push({t: nowStr(), cat, sec: Math.floor(sec), note}); persist(); render(); drawChart(); }
-    });
+  // BRCT dashed (green) if >=5
+  if(laps.length>=5){
+    const br = brctMs(laps.map(l=>l.ms));
+    const y = msToY(br);
+    ctx.strokeStyle = '#22c55e'; ctx.setLineDash([6*dpr,6*dpr]); ctx.lineWidth = 2*dpr;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
-    // ===== Render table & summary =====
-    function render(){
-      const tbody = $('#logTable tbody'); tbody.innerHTML='';
-      log.forEach((row, i)=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${i+1}</td><td>${row.t}</td><td>${row.cat}</td><td>${row.sec}</td><td>${row.note??''}</td>`;
-        tbody.appendChild(tr);
-      });
-      const total = log.reduce((a,b)=>a+b.sec,0);
-      const process = log.filter(r=>/^proc/i.test(r.cat)).reduce((a,b)=>a+b.sec,0);
-      $('#sumTotal').textContent = `${total}s`;
-      // "Cycle time" = total eller sista process – här total (enkelt)
-      $('#sumCT').textContent = `${total}s`;
-      const valPct = total? Math.round(process/total*100):0;
-      $('#sumValue').textContent = `${valPct}%`;
-    }
+  // x-labels: cycle numbers
+  ctx.fillStyle = '#475569';
+  for(let i=0;i<laps.length;i++){
+    const gap = 8*dpr;
+    const bw = Math.max(10*dpr, (innerW - gap*(Math.max(laps.length,1)-1)) / Math.max(laps.length,1));
+    const x = padL + i*(bw+gap) + bw/2;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(String(i+1), x, H-padB+8*dpr);
+  }
+}
 
-    // ===== CSV Export =====
-    function exportCSV(){
-      const headers = ['Time','Category','Seconds','Note','Line','Observer','Product','TargetCT'];
-      const fixed = [
-        $('#line').value, $('#observer').value, $('#product').value, $('#ctTarget').value
-      ];
-      const rows = log.map(r => [r.t, r.cat, String(r.sec), r.note?.replaceAll('"','""')??'']);
-      const withMeta = rows.map(r => [...r, ...fixed]);
-      const csv = [headers, ...withMeta].map(r=>r.map(x=>`"${(x??'').toString().replaceAll('"','""')}"`).join(',')).join('\r\n');
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      a.href = url; a.download = `process_observation_${ts}.csv`; a.click();
-      URL.revokeObjectURL(url);
-    }
-    $('#btnExport').addEventListener('click', exportCSV);
-    $('#btnExport2').addEventListener('click', exportCSV);
+/* ===== Status ===== */
+function status(txt){ statusEl.textContent = `Status: ${txt}`; }
 
-    // ===== Clear log =====
-    $('#btnClearLog').addEventListener('click', ()=>{
-      if(confirm(lang==='sv'?'Rensa loggen?':'de'===lang?'Protokoll leeren?':'Clear the log?')){
-        log.length = 0; persist(); render(); drawChart();
-      }
-    });
+/* ===== Events ===== */
+$('#btnStartNext').addEventListener('click', lapAndContinue);
+$('#btnStop').addEventListener('click', stopTimer);
+$('#btnReset').addEventListener('click', resetAll);
+$('#btnAdd').addEventListener('click', ()=>{
+  const s = prompt('Tid (mm:ss eller sekunder, t.ex. 02:35 eller 155.2):','');
+  const ms = parseHuman(s);
+  if(ms==null || !isFinite(ms) || ms<=0){ alert('Ogiltig tid.'); return; }
+  addLap(ms, '');
+  status('Manuell cykel tillagd.');
+});
+$('#btnExport').addEventListener('click', exportCSV);
 
-    // ===== Tabs (bottom) =====
-    const tabs = $$('.tab');
-    function activateView(key){
-      $('#view-observe').classList.toggle('active', key==='observe');
-      $('#view-chart').classList.toggle('active', key==='chart');
-      tabs.forEach(t=>t.classList.toggle('active', t.dataset.target===key));
-      if(key==='chart') drawChart();
-      try{ localStorage.setItem('leantool_view', key); }catch(e){}
-    }
-    tabs.forEach(t=> t.addEventListener('click', ()=>{
-      const k = t.dataset.target;
-      if(k==='export'){ exportCSV(); return; }
-      if(k==='theme'){ cycleTheme(); return; }
-      activateView(k);
-    }));
-    $('#btnBack').addEventListener('click', ()=> activateView('observe'));
-    $('#btnSwitch').addEventListener('click', ()=> activateView('chart'));
+// Space = Start/Next, S = Stop, R = Reset
+document.addEventListener('keydown', e=>{
+  if(e.code==='Space'){ e.preventDefault(); lapAndContinue(); }
+  if(e.key==='s' || e.key==='S') stopTimer();
+  if(e.key==='r' || e.key==='R') resetAll();
+});
 
-    // ===== Orientation → auto chart on landscape =====
-    function handleOrientation(){
-      const landscape = window.matchMedia('(orientation: landscape)').matches;
-      if(landscape) activateView('chart');
-    }
-    window.addEventListener('orientationchange', handleOrientation);
+/* ===== CSV Export (;) ===== */
+function exportCSV(){
+  const headers = [
+    'Process','Datum','CykelNr','Tid_mm:ss.cc','Tid_s','Observed_problems'
+  ];
+  const proc = $('#process').value || '';
+  const dat = $('#date').value || '';
+  const rows = laps.map((l,i)=>{
+    const seconds = (l.ms/1000).toFixed(2).replace('.', ','); // komma för sv Excel
+    const cells = [
+      proc, dat, String(i+1), formatMs(l.ms), seconds, (l.note||'').replaceAll('"','""')
+    ];
+    return cells.map(x=>`"${x}"`).join(';');
+  });
+  const csv = headers.join(';')+'\r\n'+rows.join('\r\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.href = URL.createObjectURL(blob);
+  a.download = `20-cycle-check_${ts}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  status('CSV exporterad.');
+}
 
-    // ===== Chart (simple canvas, no libs) =====
-    const ctx = $('#chart').getContext('2d');
-    function drawChart(){
-      const w = ctx.canvas.width = ctx.canvas.clientWidth * devicePixelRatio;
-      const h = ctx.canvas.height = Math.max(240, Math.floor(window.innerHeight*0.45)) * devicePixelRatio;
-      // clear
-      ctx.clearRect(0,0,w,h);
-      // data
-      const cats = ['Process','Wait','Walk','Other'];
-      const sumBy = Object.fromEntries(cats.map(c=>[c,0]));
-      for(const r of log){ if(sumBy[r.cat]!==undefined) sumBy[r.cat]+=r.sec; }
-      const data = cats.map(c=> sumBy[c]);
-      const max = Math.max(10, ...data);
-      // axes
-      const pad = 40 * devicePixelRatio;
-      const innerW = w - pad*2;
-      const innerH = h - pad*2;
-      ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1 * devicePixelRatio;
-      ctx.beginPath(); ctx.rect(pad, pad, innerW, innerH); ctx.stroke();
-      // bars
-      const gap = 16 * devicePixelRatio;
-      const bw = (innerW - gap*(data.length-1)) / data.length;
-      ctx.textAlign = 'center'; ctx.textBaseline='bottom'; ctx.fillStyle = '#0f172a';
-      data.forEach((v,i)=>{
-        const x = pad + i*(bw+gap);
-        const bh = innerH * (v/max);
-        ctx.fillStyle = ['#2563eb','#10b981','#f59e0b','#94a3b8'][i%4];
-        ctx.fillRect(x, pad + innerH - bh, bw, bh);
-        ctx.fillStyle = '#0f172a';
-        ctx.fillText(`${cats[i]} (${v}s)`, x + bw/2, pad + innerH + 14*devicePixelRatio);
-      });
-    }
-
-    // ===== Persistence (local only) =====
-    function persist(){
-      try{
-        const payload = {
-          meta:{
-            line: $('#line').value,
-            observer: $('#observer').value,
-            product: $('#product').value,
-            ctTarget: $('#ctTarget').value
-          },
-          log
-        };
-        localStorage.setItem('leantool_obs', JSON.stringify(payload));
-      }catch(e){}
-    }
-    function restore(){
-      try{
-        const saved = JSON.parse(localStorage.getItem('leantool_obs')||'null');
-        if(saved?.meta){
-          $('#line').value = saved.meta.line||'';
-          $('#observer').value = saved.meta.observer||'';
-          $('#product').value = saved.meta.product||'';
-          $('#ctTarget').value = saved.meta.ctTarget||'';
-        }
-        if(Array.isArray(saved?.log)){
-          log.splice(0,log.length, ...saved.log);
-        }
-      }catch(e){}
-      render(); drawChart();
-    }
-    ['#line','#observer','#product','#ctTarget','#note'].forEach(sel=>{
-      $(sel).addEventListener('change', persist);
-      $(sel).addEventListener('input', ()=>{ /* lightweight: no immediate persist */ });
-    });
-
-    // ===== Language & theme init =====
-    $$('#langbar .flagbtn').forEach(b=> b.addEventListener('click', ()=>{ lang = b.dataset.lang; applyLang(); }));
-    try{
-      lang = localStorage.getItem('leantool_lang') || (navigator.language||'sv').slice(0,2);
-      if(!L[lang]) lang='sv';
-    }catch(e){}
-    try{
-      theme = localStorage.getItem('leantool_theme') || 'auto';
-    }catch(e){}
-    applyTheme(theme);
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
-      if(theme==='auto') applyTheme('auto');
-    });
-
-    // ===== Load last view =====
-    try{
-      const v = localStorage.getItem('leantool_view'); if(v) activateView(v);
-    }catch(e){}
-
-    // ===== Kickoff =====
-    applyLang();
-    restore();
-    handleOrientation();
-  </script>
+/* ===== Init ===== */
+(function init(){
+  // sätt dagens datum
+  const d = new Date();
+  const yyyy = d.getFullYear(), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+  $('#date').value = `${yyyy}-${mm}-${dd}`;
+  renderList(); drawChart(); updateKPIs();
+})();
+</script>
 </body>
 </html>
