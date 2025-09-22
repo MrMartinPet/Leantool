@@ -9,17 +9,18 @@
 <style>
   :root{
     --bg:#f7f7f9; --paper:#ffffff; --ink:#0f172a; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb;
-    --radius:12px; --tap:44px; --vh:1vh; --fs:clamp(14px,2.3vw,16px); --fs-sm:clamp(12px,2vw,14px);
+    --radius:12px; --tap:46px; --vh:1vh; --fs:clamp(14px,2.3vw,16px); --fs-sm:clamp(12px,2vw,14px);
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;font-size:var(--fs);background:var(--bg);color:var(--ink)}
   .app{min-height:100%;padding:12px}
-  .row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end}
+  .row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+  .row-top{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end}
   .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 1px rgba(0,0,0,.02)}
   .pad{padding:12px}
   label{font-size:var(--fs-sm);color:var(--muted)}
-  input[type=text],input[type=date]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--tap);padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
   .btn.primary{background:#2563eb;color:#fff;border-color:#1d4ed8}
   .btn.danger{background:#fee2e2;border-color:#fecaca}
@@ -29,35 +30,38 @@
   .wrap{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:12px}
   .chart-wrap{padding:8px}
   canvas{width:100%;height:420px;display:block}
-  .list-head,.list-row{display:grid;grid-template-columns:48px 120px 1fr;gap:8px;align-items:center}
+  .list-head,.list-row{display:grid;grid-template-columns:60px 120px 1fr;gap:8px;align-items:center}
   .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px 12px;font-weight:600;z-index:1}
   .list{max-height:520px;overflow:auto;border-top:1px solid var(--line)}
   .list-row{padding:8px 12px;border-bottom:1px solid var(--line);background:#fff}
-  .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
+  .pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
   .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .timer{font-weight:800;font-size:22px;background:#0a0; color:#fff; padding:8px 12px;border-radius:10px; text-align:center}
+  .timer{font-weight:800;font-size:22px;background:#0a0;color:#fff;padding:8px 12px;border-radius:10px;text-align:center;white-space:nowrap}
   .yhelp{padding:10px 12px;color:#334155;background:#f8fafc;border-top:1px solid var(--line);border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius)}
-  /* Mobil */
-  @media (max-width: 900px){
+  .langbar{display:flex;gap:8px;align-items:center}
+  .flagbtn{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:72px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:var(--fs-sm)}
+  .flagbtn.active{background:#eef2ff;border-color:#c7d2fe}
+  .flag{font-size:22px;line-height:1}
+  .themebtn{min-width:120px}
+  @media (max-width: 980px){
     .wrap{grid-template-columns:1fr}
-    canvas{height:320px}
-    .row{grid-template-columns:1fr;align-items:stretch}
-    .timer{order:-1}
+    canvas{height:340px}
+    .row-top{grid-template-columns:1fr}
   }
 </style>
 </head>
 <body>
 <div class="app">
-  <!-- Top row -->
-  <div class="row">
+  <!-- Topp: process + datum + språk + tema -->
+  <div class="row-top">
     <div class="card pad">
       <div style="display:grid;grid-template-columns:1fr 200px;gap:12px">
         <div>
-          <label>PROCESS</label>
+          <label id="lblProcess">PROCESS</label>
           <input id="process" type="text" placeholder="Ange processnamn…">
         </div>
         <div>
-          <label>DATE</label>
+          <label id="lblDate">DATE</label>
           <input id="date" type="text" placeholder="yyyy-mm-dd">
         </div>
       </div>
@@ -70,21 +74,30 @@
         <div id="status" class="status">Status: redo.</div>
       </div>
     </div>
-    <div class="timer" id="timerDisp">00:00.00</div>
+
+    <div class="card pad" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      <div class="langbar" id="langbar" aria-label="Language">
+        <button class="flagbtn" data-lang="en"><span class="flag">🇬🇧</span><span>English</span></button>
+        <button class="flagbtn" data-lang="de"><span class="flag">🇩🇪</span><span>Deutsch</span></button>
+        <button class="flagbtn active" data-lang="sv"><span class="flag">🇸🇪</span><span>Svenska</span></button>
+      </div>
+      <button id="btnTheme" class="btn themebtn">Tema: Auto</button>
+      <div class="timer" id="timerDisp">00:00.00</div>
+    </div>
   </div>
 
-  <!-- Middle: Chart + List -->
+  <!-- Mitten: Diagram + lista -->
   <div class="wrap">
     <div class="card">
       <div class="chart-wrap">
         <canvas id="chart" height="420"></canvas>
       </div>
       <div class="yhelp">
-        <ol style="margin:0 0 0 18px;padding:0">
+        <ol id="olHelp" style="margin:0 0 0 18px;padding:0">
           <li>Skala Y-axeln efter längsta cykeltiden.</li>
-          <li>Rita varje cykel som en kolumn.</li>
+          <li>Rita varje cykel som en kolumn i diagrammet.</li>
           <li>Visa Ø CT som hel linje (orange).</li>
-          <li>Visa BRCT (snitt av 5 kortaste) som grön streckad linje (visas efter ≥5 cykler).</li>
+          <li>Visa BRCT (medel av 5 snabbaste) som grön streckad linje (visas efter ≥5 cykler).</li>
           <li>Beräkna störningsgrad D.</li>
         </ol>
       </div>
@@ -92,17 +105,17 @@
 
     <div class="card pad">
       <div class="list-head">
-        <div>CYCLE</div>
-        <div>TIME(S)</div>
-        <div>OBSERVED PROBLEMS</div>
+        <div id="thCycle">CYCLE</div>
+        <div id="thTime">TIME(S)</div>
+        <div id="thProblems">OBSERVED PROBLEMS</div>
       </div>
       <div id="list" class="list"></div>
 
       <div style="padding:12px">
         <div class="kpis">
-          <div class="pill">Ø CT (medel): <b id="kpiAvg">00:00.00</b></div>
-          <div class="pill">BRCT (5 snabbaste, medel): <b id="kpiBrct">–</b></div>
-          <div class="pill">D (störningsgrad) %: <b id="kpiD">0.0%</b></div>
+          <div class="pill"><span id="kpiAvgLabel">Ø CT (medel):</span> <b id="kpiAvg">00:00.00</b></div>
+          <div class="pill"><span id="kpiBrctLabel">BRCT (5 snabbaste, medel):</span> <b id="kpiBrct">–</b></div>
+          <div class="pill"><span id="kpiDLabel">D (störningsgrad) %:</span> <b id="kpiD">0.0%</b></div>
         </div>
       </div>
     </div>
@@ -110,7 +123,126 @@
 </div>
 
 <script>
-/* ===== Utilities ===== */
+/* ============ i18n ============ */
+const L = {
+  sv:{
+    PROCESS:"PROCESS", DATE:"DATE",
+    PH_PROCESS:"Ange processnamn…", PH_DATE:"yyyy-mm-dd",
+    STARTNEXT:"Start / Next (SPACE)", STOP:"Stop", ADDMAN:"Lägg till tid manuellt", RESET:"Nollställ",
+    EXPORT:"Exportera CSV (Excel ;)", STATUS_PREFIX:"Status: ", STATUS_READY:"redo.", STATUS_MEASURE:"Mäter cykel…", STATUS_SAVED:"Cykel sparad. Mäta nästa…", STATUS_STOP:"Timer stoppad.", STATUS_RESET:"Återställd.", STATUS_EXPORTED:"CSV exporterad.",
+    HELP:[
+      "Skala Y-axeln efter längsta cykeltiden.",
+      "Rita varje cykel som en kolumn i diagrammet.",
+      "Visa Ø CT som hel linje (orange).",
+      "Visa BRCT (medel av 5 snabbaste) som grön streckad linje (visas efter ≥5 cykler).",
+      "Beräkna störningsgrad D."
+    ],
+    CYCLE:"CYCLE", TIMES:"TIME(S)", PROBLEMS:"OBSERVED PROBLEMS",
+    KPI_AVG:"Ø CT (medel):", KPI_BRCT:"BRCT (5 snabbaste, medel):", KPI_D:"D (störningsgrad) %:",
+    PROMPT_TIME:"Tid (mm:ss eller sekunder, t.ex. 02:35 eller 155.2):",
+    ERR_TIME:"Ogiltig tid.",
+    THEME:"Tema", THEME_AUTO:"Tema: Auto", THEME_LIGHT:"Tema: Ljust", THEME_DARK:"Tema: Mörkt",
+    CSV_DECIMAL:","
+  },
+  en:{
+    PROCESS:"PROCESS", DATE:"DATE",
+    PH_PROCESS:"Enter process name…", PH_DATE:"yyyy-mm-dd",
+    STARTNEXT:"Start / Next (SPACE)", STOP:"Stop", ADDMAN:"Add time manually", RESET:"Reset",
+    EXPORT:"Export CSV (Excel ;)", STATUS_PREFIX:"Status: ", STATUS_READY:"ready.", STATUS_MEASURE:"Measuring…", STATUS_SAVED:"Cycle saved. Next…", STATUS_STOP:"Timer stopped.", STATUS_RESET:"Reset.", STATUS_EXPORTED:"CSV exported.",
+    HELP:[
+      "Scale Y-axis to the longest cycle time.",
+      "Draw each cycle as a bar.",
+      "Show Ø CT as solid line (orange).",
+      "Show BRCT (mean of 5 fastest) as green dashed line (after ≥5 cycles).",
+      "Calculate disturbance D."
+    ],
+    CYCLE:"CYCLE", TIMES:"TIME(S)", PROBLEMS:"OBSERVED PROBLEMS",
+    KPI_AVG:"Ø CT (mean):", KPI_BRCT:"BRCT (5 fastest, mean):", KPI_D:"D (disturbance) %:",
+    PROMPT_TIME:"Time (mm:ss or seconds, e.g., 02:35 or 155.2):",
+    ERR_TIME:"Invalid time.",
+    THEME:"Theme", THEME_AUTO:"Theme: Auto", THEME_LIGHT:"Theme: Light", THEME_DARK:"Theme: Dark",
+    CSV_DECIMAL:"."   // en uses dot
+  },
+  de:{
+    PROCESS:"PROZESS", DATE:"DATUM",
+    PH_PROCESS:"Prozessname eingeben…", PH_DATE:"jjjj-mm-tt",
+    STARTNEXT:"Start / Next (LEERTASTE)", STOP:"Stopp", ADDMAN:"Zeit manuell hinzufügen", RESET:"Zurücksetzen",
+    EXPORT:"CSV exportieren (Excel ;)", STATUS_PREFIX:"Status: ", STATUS_READY:"bereit.", STATUS_MEASURE:"Messung…", STATUS_SAVED:"Zyklus gespeichert. Weiter…", STATUS_STOP:"Timer gestoppt.", STATUS_RESET:"Zurückgesetzt.", STATUS_EXPORTED:"CSV exportiert.",
+    HELP:[
+      "Y-Achse an die längste Zykluszeit anpassen.",
+      "Jeden Zyklus als Säule zeichnen.",
+      "Ø CT als durchgezogene Linie (orange) anzeigen.",
+      "BRCT (Mittel der 5 schnellsten) als grüne gestrichelte Linie (ab ≥5 Zyklen).",
+      "Störungsgrad D berechnen."
+    ],
+    CYCLE:"ZYKLUS", TIMES:"ZEIT(S)", PROBLEMS:"BEOBACHTETE PROBLEME",
+    KPI_AVG:"Ø CT (Mittel):", KPI_BRCT:"BRCT (5 schnellste, Mittel):", KPI_D:"D (Störungsgrad) %:",
+    PROMPT_TIME:"Zeit (mm:ss oder Sekunden, z. B. 02:35 oder 155.2):",
+    ERR_TIME:"Ungültige Zeit.",
+    THEME:"Thema", THEME_AUTO:"Thema: Auto", THEME_LIGHT:"Thema: Hell", THEME_DARK:"Thema: Dunkel",
+    CSV_DECIMAL:","   // de uses comma
+  }
+};
+let lang = 'sv';
+function t(k){ return L[lang][k]; }
+function setText(){
+  // labels & buttons
+  $('#lblProcess').textContent = t('PROCESS');
+  $('#lblDate').textContent = t('DATE');
+  $('#process').placeholder = t('PH_PROCESS');
+  $('#date').placeholder = t('PH_DATE');
+  $('#btnStartNext').textContent = t('STARTNEXT');
+  $('#btnStop').textContent = t('STOP');
+  $('#btnAdd').textContent = t('ADDMAN');
+  $('#btnReset').textContent = t('RESET');
+  $('#btnExport').textContent = t('EXPORT');
+  $('#thCycle').textContent = t('CYCLE');
+  $('#thTime').textContent = t('TIMES');
+  $('#thProblems').textContent = t('PROBLEMS');
+  $('#kpiAvgLabel').textContent = t('KPI_AVG');
+  $('#kpiBrctLabel').textContent = t('KPI_BRCT');
+  $('#kpiDLabel').textContent   = t('KPI_D');
+  // help list
+  const ol = $('#olHelp'); ol.innerHTML = '';
+  L[lang].HELP.forEach(x=>{ const li=document.createElement('li'); li.textContent=x; ol.appendChild(li); });
+  // theme label
+  updateThemeLabel();
+  // status prefix stays; keep current suffix
+  const cur = statusEl.textContent.replace(/^.*?:\s*/, '');
+  statusEl.textContent = t('STATUS_PREFIX') + cur;
+  // mark active flag
+  document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
+  try{ localStorage.setItem('leantool_lang',lang); }catch(e){}
+}
+
+/* ============ Theme ============ */
+let theme = 'auto';
+function applyTheme(mode){
+  if(mode==='dark'){
+    document.documentElement.style.setProperty('--bg','#0b1220');
+    document.documentElement.style.setProperty('--paper','#0f172a');
+    document.documentElement.style.setProperty('--ink','#e5e7eb');
+    document.documentElement.style.setProperty('--line','#1f2937');
+  }else if(mode==='light'){
+    document.documentElement.style.setProperty('--bg','#f7f7f9');
+    document.documentElement.style.setProperty('--paper','#ffffff');
+    document.documentElement.style.setProperty('--ink','#0f172a');
+    document.documentElement.style.setProperty('--line','#e5e7eb');
+  }else{ // auto
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(dark?'dark':'light'); return;
+  }
+}
+function updateThemeLabel(){
+  $('#btnTheme').textContent = theme==='auto' ? t('THEME_AUTO') : (theme==='light' ? t('THEME_LIGHT') : t('THEME_DARK'));
+}
+$('#btnTheme').addEventListener('click', ()=>{
+  theme = theme==='auto'?'light':theme==='light'?'dark':'auto';
+  try{ localStorage.setItem('leantool_theme',theme); }catch(e){}
+  applyTheme(theme); updateThemeLabel();
+});
+
+/* ============ Utilities ============ */
 const $ = s => document.querySelector(s);
 const listEl = $('#list');
 const timerDisp = $('#timerDisp');
@@ -120,7 +252,7 @@ const ctx = chart.getContext('2d', {willReadFrequently:true});
 
 function pad(n, w=2){ return String(n).padStart(w,'0'); }
 function formatMs(ms){
-  // mm:ss.cc (centisekunder)
+  // mm:ss.cc
   const cs = Math.round(ms/10);
   const m = Math.floor(cs/6000);
   const s = Math.floor((cs%6000)/100);
@@ -128,7 +260,7 @@ function formatMs(ms){
   return `${pad(m)}:${pad(s)}.${pad(c)}`;
 }
 function parseHuman(s){
-  // "mm:ss" eller "mm:ss.cc" eller sekunder (flyttal)
+  // "mm:ss(.cc)" eller sekunder (flyttal)
   s = (s||'').trim().replace(',', '.');
   if(!s) return null;
   if(/^\d+(\.\d+)?$/.test(s)) return Math.round(parseFloat(s)*1000);
@@ -139,14 +271,19 @@ function parseHuman(s){
   const cc = m[3] ? parseInt(m[3].padEnd(2,'0'),10) : 0;
   return ((mm*60)+ss)*1000 + Math.round(cc*10);
 }
+function formatSecondsForCSV(ms){
+  const secs = (ms/1000).toFixed(2);
+  return lang==='en' ? secs : secs.replace('.', L[lang].CSV_DECIMAL); // sv/de = komma
+}
 
-/* ===== State ===== */
+/* ============ State ============ */
 let laps = [];                 // {ms:number, note:string}
 let running = false;
 let tStart = 0;
 let tickHandle = null;
 
-/* ===== Timer ===== */
+/* ============ Timer & actions ============ */
+function statusSuffix(s){ statusEl.textContent = t('STATUS_PREFIX') + s; }
 function startTimer(){
   if(running) return;
   running = true;
@@ -155,7 +292,7 @@ function startTimer(){
     const ms = performance.now() - tStart;
     timerDisp.textContent = formatMs(ms);
   }, 50);
-  status('Mäter cykel…');
+  statusSuffix(t('STATUS_MEASURE'));
 }
 function lapAndContinue(){
   if(!running){ startTimer(); return; }
@@ -164,34 +301,28 @@ function lapAndContinue(){
   // ny start
   tStart = performance.now();
   timerDisp.textContent = '00:00.00';
-  status('Cykel sparad. Mäta nästa…');
+  statusSuffix(t('STATUS_SAVED'));
 }
 function stopTimer(){
   if(!running) return;
   clearInterval(tickHandle);
   tickHandle = null;
   running = false;
-  status('Timer stoppad.');
+  statusSuffix(t('STATUS_STOP'));
 }
 function resetAll(){
   stopTimer();
   laps = [];
-  renderList();
-  drawChart();
-  updateKPIs();
+  renderList(); drawChart(); updateKPIs();
   timerDisp.textContent = '00:00.00';
-  status('Återställd.');
+  statusSuffix(t('STATUS_RESET'));
 }
 
-/* ===== Laps ===== */
+/* ============ Laps / list ============ */
 function addLap(ms, note=''){
   laps.push({ms, note});
-  renderList();
-  drawChart();
-  updateKPIs();
+  renderList(); drawChart(); updateKPIs();
 }
-
-/* ===== UI: listan ===== */
 function renderList(){
   listEl.innerHTML = '';
   laps.forEach((l, i)=>{
@@ -204,15 +335,15 @@ function renderList(){
     `;
     listEl.appendChild(row);
   });
-  listEl.querySelectorAll('textarea').forEach(t=>{
-    t.addEventListener('input', e=>{
+  listEl.querySelectorAll('textarea').forEach(tArea=>{
+    tArea.addEventListener('input', e=>{
       const ix = +e.target.getAttribute('data-ix');
       laps[ix].note = e.target.value;
     });
   });
 }
 
-/* ===== Stats (avg, BRCT, D) ===== */
+/* ============ Stats (avg, BRCT, D) ============ */
 function avgMs(arr){ return arr.length? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
 function brctMs(arr){
   if(arr.length<5) return null;
@@ -223,16 +354,14 @@ function updateKPIs(){
   const arr = laps.map(x=>x.ms);
   const avg = avgMs(arr);
   const br = brctMs(arr);
-  $('#kpiAvg').textContent = formatMs(Math.round(avg)||0);
+  $('#kpiAvg').textContent  = formatMs(Math.round(avg)||0);
   $('#kpiBrct').textContent = br!==null ? formatMs(Math.round(br)) : '–';
   let D = 0;
-  if(avg>0 && br!==null){
-    D = ( (avg - br) / avg ) * 100;
-  }
+  if(avg>0 && br!==null){ D = ((avg - br) / avg) * 100; }
   $('#kpiD').textContent = `${D.toFixed(1)}%`;
 }
 
-/* ===== Chart (bars + mean + BRCT dashed) ===== */
+/* ============ Chart (bars + mean + BRCT dashed) ============ */
 function drawChart(){
   const dpr = window.devicePixelRatio || 1;
   const W = chart.clientWidth * dpr;
@@ -240,39 +369,36 @@ function drawChart(){
   chart.width = W; chart.height = H;
   ctx.clearRect(0,0,W,H);
 
-  // padding och skala
-  const padL = 60*dpr, padR = 20*dpr, padT = 20*dpr, padB = 40*dpr;
+  const padL = 70*dpr, padR = 20*dpr, padT = 20*dpr, padB = 40*dpr;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
 
-  // y-skala efter längsta cykel (min 10s)
+  // y-scale
   const maxMs = Math.max(10000, ...laps.map(l=>l.ms));
-  // runda upp till närmsta 10 sek
   const maxS = Math.ceil(maxMs/10000)*10;
   const msToY = ms => padT + innerH - (ms/(maxS*1000))*innerH;
 
-  // rita ram
+  // border
   ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1*dpr;
   ctx.strokeRect(padL, padT, innerW, innerH);
 
-  // y-ticks var 30:e sekund
+  // grid & y labels each 30s
   ctx.fillStyle = '#334155'; ctx.font = `${12*dpr}px system-ui, -apple-system, Segoe UI, Inter, Arial`;
   for(let s=0; s<=maxS; s+=30){
     const y = msToY(s*1000);
     ctx.strokeStyle = s===0? '#cbd5e1' : '#e5e7eb';
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
-    // label mm:ss
     const m = Math.floor(s/60), sec = s%60;
     const label = `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-    ctx.fillStyle = '#475569';
-    ctx.fillText(label, 10*dpr, y+4*dpr);
+    ctx.fillStyle = '#475569'; ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText(label, 10*dpr, y);
   }
 
   // bars
   const n = laps.length;
   if(n){
     const gap = 8*dpr;
-    const bw = Math.max(10*dpr, (innerW - gap*(Math.max(n,1)-1)) / Math.max(n,1));
+    const bw = Math.max(10*dpr, (innerW - gap*(n-1)) / n);
     ctx.fillStyle = 'rgba(71,85,105,.7)';
     laps.forEach((l, i)=>{
       const x = padL + i*(bw+gap);
@@ -290,7 +416,7 @@ function drawChart(){
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
   }
 
-  // BRCT dashed (green) if >=5
+  // BRCT dashed (green)
   if(laps.length>=5){
     const br = brctMs(laps.map(l=>l.ms));
     const y = msToY(br);
@@ -299,52 +425,57 @@ function drawChart(){
     ctx.setLineDash([]);
   }
 
-  // x-labels: cycle numbers
-  ctx.fillStyle = '#475569';
-  for(let i=0;i<laps.length;i++){
-    const gap = 8*dpr;
-    const bw = Math.max(10*dpr, (innerW - gap*(Math.max(laps.length,1)-1)) / Math.max(laps.length,1));
+  // x labels
+  ctx.fillStyle = '#475569'; ctx.textAlign='center'; ctx.textBaseline='top';
+  const gap = 8*dpr;
+  const bw = n? Math.max(10*dpr, (innerW - gap*(n-1)) / n) : 10*dpr;
+  for(let i=0;i<n;i++){
     const x = padL + i*(bw+gap) + bw/2;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.fillText(String(i+1), x, H-padB+8*dpr);
   }
 }
 
-/* ===== Status ===== */
-function status(txt){ statusEl.textContent = `Status: ${txt}`; }
-
-/* ===== Events ===== */
-$('#btnStartNext').addEventListener('click', lapAndContinue);
-$('#btnStop').addEventListener('click', stopTimer);
-$('#btnReset').addEventListener('click', resetAll);
-$('#btnAdd').addEventListener('click', ()=>{
-  const s = prompt('Tid (mm:ss eller sekunder, t.ex. 02:35 eller 155.2):','');
+/* ============ Events ============ */
+document.getElementById('btnStartNext').addEventListener('click', lapAndContinue);
+document.getElementById('btnStop').addEventListener('click', stopTimer);
+document.getElementById('btnReset').addEventListener('click', resetAll);
+document.getElementById('btnAdd').addEventListener('click', ()=>{
+  const s = prompt(t('PROMPT_TIME'),'');
   const ms = parseHuman(s);
-  if(ms==null || !isFinite(ms) || ms<=0){ alert('Ogiltig tid.'); return; }
+  if(ms==null || !isFinite(ms) || ms<=0){ alert(t('ERR_TIME')); return; }
   addLap(ms, '');
-  status('Manuell cykel tillagd.');
+  statusSuffix(t('STATUS_SAVED'));
 });
-$('#btnExport').addEventListener('click', exportCSV);
+document.getElementById('btnExport').addEventListener('click', exportCSV);
 
-// Space = Start/Next, S = Stop, R = Reset
+// keyboard: Space=Start/Next, S=Stop, R=Reset
 document.addEventListener('keydown', e=>{
   if(e.code==='Space'){ e.preventDefault(); lapAndContinue(); }
   if(e.key==='s' || e.key==='S') stopTimer();
   if(e.key==='r' || e.key==='R') resetAll();
 });
 
-/* ===== CSV Export (;) ===== */
+// language buttons
+document.querySelectorAll('#langbar .flagbtn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    lang = b.dataset.lang;
+    try{ localStorage.setItem('leantool_lang',lang); }catch(e){}
+    setText();
+  });
+});
+
+/* ============ CSV export (semicolon; decimal by language) ============ */
 function exportCSV(){
   const headers = [
-    'Process','Datum','CykelNr','Tid_mm:ss.cc','Tid_s','Observed_problems'
+    'Process','Date','Cycle','Time_mm:ss.cc','Time_s','Observed_problems'
   ];
   const proc = $('#process').value || '';
-  const dat = $('#date').value || '';
+  const dat  = $('#date').value || '';
   const rows = laps.map((l,i)=>{
-    const seconds = (l.ms/1000).toFixed(2).replace('.', ','); // komma för sv Excel
-    const cells = [
-      proc, dat, String(i+1), formatMs(l.ms), seconds, (l.note||'').replaceAll('"','""')
-    ];
+    const tmm = formatMs(l.ms);
+    const ts  = formatSecondsForCSV(l.ms); // decimal char per lang
+    const note = (l.note||'').replaceAll('"','""');
+    const cells = [proc, dat, String(i+1), tmm, ts, note];
     return cells.map(x=>`"${x}"`).join(';');
   });
   const csv = headers.join(';')+'\r\n'+rows.join('\r\n');
@@ -355,16 +486,28 @@ function exportCSV(){
   a.download = `20-cycle-check_${ts}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
-  status('CSV exporterad.');
+  statusSuffix(t('STATUS_EXPORTED'));
 }
 
-/* ===== Init ===== */
+/* ============ Init ============ */
 (function init(){
-  // sätt dagens datum
+  // språk & tema från localStorage
+  try{ lang = localStorage.getItem('leantool_lang') || (navigator.language||'sv').slice(0,2); if(!L[lang]) lang='sv'; }catch(e){}
+  try{ theme = localStorage.getItem('leantool_theme') || 'auto'; }catch(e){}
+  applyTheme(theme); updateThemeLabel(); setText();
+
+  // dagens datum default
   const d = new Date();
   const yyyy = d.getFullYear(), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
   $('#date').value = `${yyyy}-${mm}-${dd}`;
-  renderList(); drawChart(); updateKPIs();
+
+  // draw empty chart
+  drawChart();
+
+  // orientering → bara rita om (diagram får mer höjd i liggande)
+  window.addEventListener('resize', drawChart);
+  window.addEventListener('orientationchange', ()=>{ setTimeout(drawChart, 200); });
+  statusSuffix(t('STATUS_READY'));
 })();
 </script>
 </body>
