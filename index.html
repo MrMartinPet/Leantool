@@ -17,8 +17,10 @@
   .app{min-height:100%;padding:8px}
   .grid{display:grid;gap:8px}
   .row-top{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end}
+  .process-grid{display:grid;grid-template-columns:1fr 160px;gap:8px}
   .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
   .pad{padding:8px}
+  .card-meta{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
   label{font-size:var(--fs-sm);color:var(--muted)}
   input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
@@ -38,14 +40,46 @@
   .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
   .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
   .timer{font-weight:800;font-size:16px;background:#0a0;color:#fff;padding:6px 10px;border-radius:8px;text-align:center;white-space:nowrap}
-  .langbar{display:flex;gap:6px;align-items:center}
+  .langbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
   .flagbtn{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:62px;padding:6px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:var(--fs-sm)}
   .flagbtn.active{background:#eef2ff;border-color:#c7d2fe}
   .flag{font-size:18px;line-height:1}
+  .list-row .cell.problems textarea{width:100%}
   @media (max-width: 980px){
     .wrap{grid-template-columns:1fr}
     canvas{height:300px}
     .row-top{grid-template-columns:1fr auto}
+  }
+  @media (max-width: 720px){
+    .row-top{grid-template-columns:1fr}
+    .card-meta{align-items:stretch}
+    .card-meta .langbar{justify-content:center}
+    .card-meta .timer{width:100%}
+  }
+  @media (max-width: 640px){
+    .app{padding:12px 10px}
+    .process-grid{grid-template-columns:1fr}
+    .toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .toolbar .btn{width:100%}
+    .status{grid-column:1/-1;text-align:center}
+    .wrap{gap:12px}
+    canvas{height:240px}
+    .list-head{display:none}
+    .list{max-height:none}
+    .list-row{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'cycle time' 'problems problems';align-items:start;gap:8px}
+    .list-row .cell{display:flex;flex-direction:column;gap:2px}
+    .list-row .cell::before{content:attr(data-label);font-size:var(--fs-sm);color:var(--muted);font-weight:500}
+    .list-row .cycle{grid-area:cycle}
+    .list-row .time{grid-area:time}
+    .list-row .problems{grid-area:problems}
+    .list-row textarea{min-height:64px}
+    .kpis{grid-template-columns:1fr}
+  }
+  @media (max-width: 480px){
+    .toolbar{grid-template-columns:1fr}
+    .langbar{justify-content:center}
+    .flagbtn{flex:1 1 auto;min-width:0}
+    .card-meta{gap:8px}
   }
 </style>
 </head>
@@ -54,7 +88,7 @@
   <!-- Topp: process + datum + språk + tema + timer -->
   <div class="row-top">
     <div class="card pad">
-      <div style="display:grid;grid-template-columns:1fr 160px;gap:8px">
+      <div class="process-grid">
         <div>
           <label id="lblProcess">PROCESS</label>
           <input id="process" type="text" placeholder="Ange processnamn…">
@@ -73,7 +107,7 @@
       </div>
     </div>
 
-    <div class="card pad" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+    <div class="card pad card-meta">
       <div class="langbar" id="langbar" aria-label="Language">
         <button class="flagbtn" data-lang="en"><span class="flag">🇬🇧</span><span>English</span></button>
         <button class="flagbtn" data-lang="de"><span class="flag">🇩🇪</span><span>Deutsch</span></button>
@@ -153,12 +187,13 @@ const L = {
 };
 let lang = 'sv';
 const $ = s => document.querySelector(s);
+const toggleBtn = $('#btnToggle');
 function setLangTexts(){
   $('#lblProcess').textContent = L[lang].PROCESS;
   $('#lblDate').textContent = L[lang].DATE;
   $('#process').placeholder = L[lang].PH_PROCESS;
   $('#date').placeholder = L[lang].PH_DATE;
-  $('#btnToggle').textContent = running ? L[lang].TOGGLE_STOP : L[lang].TOGGLE_START;
+  toggleBtn.textContent = running ? L[lang].TOGGLE_STOP : L[lang].TOGGLE_START;
   $('#btnAdd').textContent = L[lang].ADD;
   $('#btnReset').textContent = L[lang].RESET;
   $('#btnExport').textContent = L[lang].EXPORT;
@@ -170,6 +205,7 @@ function setLangTexts(){
   $('#kpiBrctLabel').textContent = L[lang].KPI_BRCT;
   $('#kpiDLabel').textContent = L[lang].KPI_D;
   document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
+  renderList();
 }
 
 let theme='auto';
@@ -214,16 +250,37 @@ function toggle(){
   if(!running){
     running=true; tStart=performance.now();
     tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
-    $('#btnToggle').textContent=L[lang].TOGGLE_STOP; status(L[lang].MEASURE);
+    toggleBtn.textContent=L[lang].TOGGLE_STOP; status(L[lang].MEASURE);
   }else{
     clearInterval(tick); tick=null; running=false;
     const ms=Math.max(10, performance.now()-tStart);
     addLap(ms);
     timerDisp.textContent='00:00.00';
-    $('#btnToggle').textContent=L[lang].TOGGLE_START; status(L[lang].SAVED);
+    toggleBtn.textContent=L[lang].TOGGLE_START; status(L[lang].SAVED);
   }
 }
-$('#btnToggle').addEventListener('click', toggle);
+toggleBtn.addEventListener('click', toggle);
+
+function allowSpaceToggle(active){
+  if(!active || active===document.body || active===document.documentElement) return true;
+  if(active===toggleBtn) return true;
+  if(active.isContentEditable) return false;
+  if(active.tagName){
+    const tag=active.tagName.toUpperCase();
+    if(tag==='TEXTAREA') return false;
+    if(tag==='INPUT'){ const type=(active.type||'').toLowerCase(); if(type && type!=='button' && type!=='submit') return false; }
+    if(tag==='BUTTON') return active===toggleBtn;
+  }
+  return false;
+}
+
+window.addEventListener('keydown', e=>{
+  if(e.code!=='Space') return;
+  if(e.repeat){ e.preventDefault(); return; }
+  if(!allowSpaceToggle(document.activeElement)) return;
+  e.preventDefault();
+  toggle();
+});
 
 /* ===== Laps/List/Stats ===== */
 function addLap(ms,note=''){ laps.push({ms,note}); renderList(); drawChart(); updateKPIs(); }
@@ -231,7 +288,7 @@ function renderList(){
   const list=$('#list'); list.innerHTML='';
   laps.forEach((l,i)=>{
     const row=document.createElement('div'); row.className='list-row';
-    row.innerHTML=`<div>${i+1}</div><div>${formatMs(l.ms)}</div><div><textarea data-ix="${i}">${l.note||''}</textarea></div>`;
+    row.innerHTML=`<div class="cell cycle" data-label="${L[lang].CYCLE}">${i+1}</div><div class="cell time" data-label="${L[lang].TIMES}">${formatMs(l.ms)}</div><div class="cell problems" data-label="${L[lang].PROBLEMS}"><textarea data-ix="${i}">${l.note||''}</textarea></div>`;
     list.appendChild(row);
   });
   list.querySelectorAll('textarea').forEach(t=> t.addEventListener('input', e=>{ const ix=+e.target.dataset.ix; laps[ix].note=e.target.value; }));
