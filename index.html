@@ -259,10 +259,12 @@ function startTimer(){
 function stopTimer(recordLap=true){
   if(!running) return;
   clearInterval(tick); tick=null; running=false;
+  const elapsed=Math.max(10, performance.now()-tStart);
   if(recordLap){
-    const ms=Math.max(10, performance.now()-tStart);
-    addLap(ms);
+    addLap(elapsed);
     status(L[lang].SAVED);
+  }else{
+    status(L[lang].STOPPED);
   }
   timerDisp.textContent='00:00.00';
   toggleBtn.textContent=L[lang].TOGGLE_START;
@@ -270,8 +272,8 @@ function stopTimer(recordLap=true){
 
 function lap(){
   if(!running) return;
-  const ms=Math.max(10, performance.now()-tStart);
-  addLap(ms);
+  const elapsed=Math.max(10, performance.now()-tStart);
+  addLap(elapsed);
   status(L[lang].SAVED);
   tStart=performance.now();
   timerDisp.textContent='00:00.00';
@@ -287,7 +289,10 @@ function allowSpaceToggle(active){
   if(active.tagName){
     const tag=active.tagName.toUpperCase();
     if(tag==='TEXTAREA') return false;
-    if(tag==='INPUT'){ const type=(active.type||'').toLowerCase(); if(type && type!=='button' && type!=='submit') return false; }
+    if(tag==='INPUT'){
+      const type=(active.type||'').toLowerCase();
+      if(type && type!=='button' && type!=='submit') return false;
+    }
     if(tag==='BUTTON') return active===toggleBtn;
   }
   return false;
