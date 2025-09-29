@@ -152,7 +152,7 @@
 /* ===== i18n ===== */
 const L = {
   sv:{ PROCESS:"PROCESS", DATE:"DATE", PH_PROCESS:"Ange processnamn…", PH_DATE:"yyyy-mm-dd",
-    TOGGLE_START:"Start", TOGGLE_STOP:"Stoppa & spara", ADD:"+ Manuell", RESET:"Nollställ", EXPORT:"Export CSV",
+    TOGGLE_START:"Start", TOGGLE_LAP:"Varv", ADD:"+ Manuell", RESET:"Nollställ", EXPORT:"Export CSV",
     STATUS_PREFIX:"Status: ", READY:"redo.", MEASURE:"Mäter…", SAVED:"Sparad.", STOPPED:"Stoppad.", RESETTED:"Återställd.",
     HELP:"Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön streck = BRCT (5 snabbaste).",
     CYCLE:"CYCLE", TIMES:"TIME(S)", PROBLEMS:"OBSERVED PROBLEMS",
@@ -163,7 +163,7 @@ const L = {
     CSV_DECIMAL:","
   },
   en:{ PROCESS:"PROCESS", DATE:"DATE", PH_PROCESS:"Enter process name…", PH_DATE:"yyyy-mm-dd",
-    TOGGLE_START:"Start", TOGGLE_STOP:"Stop & Save", ADD:"+ Manual", RESET:"Reset", EXPORT:"Export CSV",
+    TOGGLE_START:"Start", TOGGLE_LAP:"Lap", ADD:"+ Manual", RESET:"Reset", EXPORT:"Export CSV",
     STATUS_PREFIX:"Status: ", READY:"ready.", MEASURE:"Measuring…", SAVED:"Saved.", STOPPED:"Stopped.", RESETTED:"Reset.",
     HELP:"Y-axis auto to longest cycle. Bars = cycles. Orange = Ø CT. Green dashed = BRCT (5 fastest).",
     CYCLE:"CYCLE", TIMES:"TIME(S)", PROBLEMS:"OBSERVED PROBLEMS",
@@ -174,7 +174,7 @@ const L = {
     CSV_DECIMAL:"."
   },
   de:{ PROCESS:"PROZESS", DATE:"DATUM", PH_PROCESS:"Prozessname eingeben…", PH_DATE:"jjjj-mm-tt",
-    TOGGLE_START:"Start", TOGGLE_STOP:"Stoppen & speichern", ADD:"+ Manuell", RESET:"Zurücksetzen", EXPORT:"CSV exportieren",
+    TOGGLE_START:"Start", TOGGLE_LAP:"Runde", ADD:"+ Manuell", RESET:"Zurücksetzen", EXPORT:"CSV exportieren",
     STATUS_PREFIX:"Status: ", READY:"bereit.", MEASURE:"Messung…", SAVED:"Gespeichert.", STOPPED:"Gestoppt.", RESETTED:"Zurückgesetzt.",
     HELP:"Y-Achse automatisch zur längsten Zykluszeit. Balken = Zyklen. Orange = Ø CT. Grün gestrichelt = BRCT (5 schnellste).",
     CYCLE:"ZYKLUS", TIMES:"ZEIT(S)", PROBLEMS:"BEOBACHTETE PROBLEME",
@@ -193,7 +193,7 @@ function setLangTexts(){
   $('#lblDate').textContent = L[lang].DATE;
   $('#process').placeholder = L[lang].PH_PROCESS;
   $('#date').placeholder = L[lang].PH_DATE;
-  toggleBtn.textContent = running ? L[lang].TOGGLE_STOP : L[lang].TOGGLE_START;
+  toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
   $('#btnAdd').textContent = L[lang].ADD;
   $('#btnReset').textContent = L[lang].RESET;
   $('#btnExport').textContent = L[lang].EXPORT;
@@ -245,44 +245,30 @@ let running=false, tStart=0, tick=null;
 const timerDisp=$('#timerDisp'), statusEl=$('#status'), chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
 function status(s){ statusEl.textContent = L[lang].STATUS_PREFIX + s; }
 
-/* ===== Timer: start/stop/lap/toggle ===== */
+/* ===== Timer ===== */
 function startTimer(){
   if(running) return;
   running=true;
   tStart=performance.now();
   timerDisp.textContent='00:00.00';
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
-  toggleBtn.textContent=L[lang].TOGGLE_STOP;
+  toggleBtn.textContent=L[lang].TOGGLE_LAP;
   status(L[lang].MEASURE);
 }
 
-function stopTimer(recordLap=true){
-  if(!running) return;
-  clearInterval(tick); tick=null; running=false;
-  const elapsed=Math.max(10, performance.now()-tStart);
-  if(recordLap){
-    addLap(elapsed);
-    status(L[lang].SAVED);
-  }else{
-    status(L[lang].STOPPED);
-  }
-  timerDisp.textContent='00:00.00';
-  toggleBtn.textContent=L[lang].TOGGLE_START;
-}
-
-function lap(){
+function lap(){ // spara och fortsätt utan stopp
   if(!running) return;
   const elapsed=Math.max(10, performance.now()-tStart);
   addLap(elapsed);
   status(L[lang].SAVED);
-  tStart=performance.now();
+  tStart=performance.now(); // direkt ny cykel
   timerDisp.textContent='00:00.00';
 }
 
-function toggle(){ running ? stopTimer(true) : startTimer(); }
+function toggle(){ running ? lap() : startTimer(); }
 toggleBtn.addEventListener('click', toggle);
 
-/* ===== Keyboard handling ===== */
+/* ===== Tangentbord (Space: start/varv) ===== */
 function allowSpaceToggle(active){
   if(!active || active===document.body || active===document.documentElement) return true;
   if(active===toggleBtn) return true;
@@ -304,11 +290,7 @@ window.addEventListener('keydown', e=>{
   if(e.repeat){ e.preventDefault(); return; }
   if(!allowSpaceToggle(document.activeElement)) return;
   e.preventDefault();
-  if(running){
-    lap();
-  }else{
-    startTimer();
-  }
+  running ? lap() : startTimer();
 });
 
 /* ===== Laps/List/Stats ===== */
@@ -331,40 +313,48 @@ function updateKPIs(){
   const D=(avg>0&&br!==null)?((avg-br)/avg*100):0; $('#kpiD').textContent=`${D.toFixed(1)}%`;
 }
 
-/* ===== Chart ===== */
+/* ===== Diagram ===== */
 function drawChart(){
   const dpr=window.devicePixelRatio||1, W=chart.clientWidth*dpr, H=chart.clientHeight*dpr;
   chart.width=W; chart.height=H; ctx.clearRect(0,0,W,H);
   const padL=64*dpr, padR=16*dpr, padT=14*dpr, padB=34*dpr, innerW=W-padL-padR, innerH=H-padT-padB;
   const maxMs=Math.max(10000,...laps.map(l=>l.ms)); const maxS=Math.ceil(maxMs/10000)*10; const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
-  // frame
+  // ram
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1*dpr; ctx.strokeRect(padL,padT,innerW,innerH);
   // grid y/30s
   ctx.fillStyle='#475569'; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
   for(let s=0;s<=maxS;s+=30){ const y=msToY(s*1000); ctx.strokeStyle=s===0?'#cbd5e1':'#e5e7eb'; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
     const m=Math.floor(s/60), sec=s%60; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y); }
-  // bars
+  // staplar
   const n=laps.length; if(n){ const gap=6*dpr, bw=Math.max(8*dpr,(innerW-gap*(n-1))/n); ctx.fillStyle='rgba(71,85,105,.75)';
     laps.forEach((l,i)=>{ const x=padL+i*(bw+gap), y=msToY(l.ms), h=padT+innerH-y; ctx.fillRect(x,y,bw,h); });
-    // x labels
+    // x-etiketter
     ctx.fillStyle='#475569'; ctx.textAlign='center'; ctx.textBaseline='top';
     for(let i=0;i<n;i++){ const gap2=6*dpr, bw2=Math.max(8*dpr,(innerW-gap2*(n-1))/n); const x=padL+i*(bw2+gap2)+bw2/2; ctx.fillText(String(i+1), x, H-padB+6*dpr); }
   }
-  // mean line
+  // medellinje
   if(laps.length){ const mean=avgMs(laps.map(l=>l.ms)); const y=msToY(mean); ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
   // BRCT
   if(laps.length>=5){ const br=brctMs(laps.map(l=>l.ms)); const y=msToY(br); ctx.strokeStyle='#22c55e'; ctx.setLineDash([5*dpr,5*dpr]); ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); ctx.setLineDash([]); }
 }
 
-/* ===== Buttons ===== */
+/* ===== Knappar ===== */
 $('#btnAdd').addEventListener('click', ()=>{
   const s=prompt(L[lang].PROMPT_TIME,''); const ms=parseHuman(s);
   if(ms==null || !isFinite(ms) || ms<=0){ alert(L[lang].ERR_TIME); return; }
   addLap(ms); status(L[lang].SAVED);
 });
 $('#btnReset').addEventListener('click', ()=>{
-  if(running){ stopTimer(false); }
-  laps=[]; renderList(); drawChart(); updateKPIs(); status(L[lang].RESETTED); timerDisp.textContent='00:00.00';
+  // Låt reset stoppa mätning utan att logga ett varv
+  if(running){
+    clearInterval(tick); tick=null; running=false;
+    status(L[lang].RESETTED);
+  }else{
+    status(L[lang].RESETTED);
+  }
+  toggleBtn.textContent=L[lang].TOGGLE_START;
+  timerDisp.textContent='00:00.00';
+  laps=[]; renderList(); drawChart(); updateKPIs();
 });
 $('#btnExport').addEventListener('click', ()=>{
   const headers=['Process','Date','Cycle','Time_mm:ss.cc','Time_s','Observed_problems'];
