@@ -16,66 +16,63 @@
   body{font-family:system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;font-size:var(--fs);background:var(--bg);color:var(--ink)}
   .app{min-height:100%;padding:8px}
 
-  /* Menyrad högst upp */
+  /* Menyrad */
   .menubar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:6px 10px;margin-bottom:8px}
-  .brand{display:flex;align-items:center;gap:10px}
   .logo{font-weight:800;font-size:16px;white-space:nowrap}
   .menu-actions{display:flex;gap:6px;align-items:center}
   .langbar{display:flex;gap:6px;align-items:center}
-  .flagbtn{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
+  .flagbtn{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm);cursor:pointer}
   .flagbtn.active{background:#eef2ff;border-color:#c7d2fe}
   .flag{font-size:16px;line-height:1}
 
-  .grid{display:grid;gap:8px}
+  /* Layout */
   .row-top{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
   .process-grid{display:grid;grid-template-columns:1fr 160px;gap:8px}
   .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
   .pad{padding:8px}
-  .card-meta{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+  .toolbar{display:flex;gap:6px;flex-wrap:wrap}
   label{font-size:var(--fs-sm);color:var(--muted)}
   input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
   .btn.primary{background:#2563eb;color:#fff;border-color:#1d4ed8}
   .btn.danger{background:#fee2e2;border-color:#fecaca}
   .btn.small{min-height:34px;padding:6px 10px;font-size:var(--fs-sm)}
-  .toolbar{display:flex;flex-wrap:wrap;gap:6px}
   .status{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:var(--fs-sm)}
+  .timer{font-weight:800;font-size:16px;background:#0a0;color:#fff;padding:6px 10px;border-radius:8px;text-align:center;white-space:nowrap}
+
   .wrap{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px}
   .chart-wrap{padding:6px}
   canvas{width:100%;height:360px;display:block}
-  .list-head,.list-row{display:grid;grid-template-columns:48px 96px 1fr;gap:6px;align-items:center}
+
+  /* Lista */
+  .list-head,.list-row{display:grid;grid-template-columns:48px 96px 1fr 40px;gap:6px;align-items:center}
   .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:6px 8px;font-weight:600;z-index:1}
   .list{max-height:460px;overflow:auto;border-top:1px solid var(--line)}
   .list-row{padding:6px 8px;border-bottom:1px solid var(--line);background:#fff;cursor:pointer}
-  .list-row.selected{outline:2px solid #93c5fd; background:#eff6ff}
+  .list-row.selected{outline:2px solid #93c5fd;background:#eff6ff}
   textarea{width:100%;min-height:36px;border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:var(--fs-sm)}
+  .delete-btn{cursor:pointer;border:none;background:none;font-size:18px;line-height:1;color:#dc2626}
+  .delete-btn:hover{color:#b91c1c}
+
   .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
   .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-  .timer{font-weight:800;font-size:16px;background:#0a0;color:#fff;padding:6px 10px;border-radius:8px;text-align:center;white-space:nowrap}
 
-  @media (max-width: 980px){
+  @media (max-width:980px){
     .wrap{grid-template-columns:1fr}
     canvas{height:300px}
     .row-top{grid-template-columns:1fr}
   }
-  @media (max-width: 640px){
-    .app{padding:12px 10px}
-    .process-grid{grid-template-columns:1fr}
-    .toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-    .toolbar .btn{width:100%}
-    .status{grid-column:1/-1;text-align:center}
-    .wrap{gap:12px}
-    canvas{height:240px}
+  @media (max-width:640px){
     .list-head{display:none}
     .list{max-height:none}
-    .list-row{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'cycle time' 'problems problems';align-items:start;gap:8px}
-    .list-row .cell{display:flex;flex-direction:column;gap:2px}
-    .list-row .cell::before{content:attr(data-label);font-size:var(--fs-sm);color:var(--muted);font-weight:500}
+    .list-row{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:
+      "cycle time"
+      "problems problems"
+      "delete delete"}
     .list-row .cycle{grid-area:cycle}
     .list-row .time{grid-area:time}
     .list-row .problems{grid-area:problems}
-    .list-row textarea{min-height:64px}
-    .kpis{grid-template-columns:1fr}
+    .list-row .delete-cell{grid-area:delete;text-align:right}
   }
 </style>
 </head>
@@ -84,13 +81,11 @@
 
   <!-- Menyrad -->
   <div class="menubar">
-    <div class="brand">
-      <div class="logo">20 Cycle Check</div>
-    </div>
+    <div class="logo">20 Cycle Check</div>
     <div class="menu-actions">
-      <div class="langbar" id="langbar" aria-label="Language">
-        <button class="flagbtn active" data-lang="sv"><span class="flag">🇸🇪</span><span>SV</span></button>
-        <button class="flagbtn" data-lang="en"><span class="flag">🇬🇧</span><span>EN</span></button>
+      <div class="langbar" id="langbar">
+        <button class="flagbtn active" data-lang="sv"><span class="flag">🇸🇪</span>SV</button>
+        <button class="flagbtn" data-lang="en"><span class="flag">🇬🇧</span>EN</button>
       </div>
       <button id="btnTheme" class="btn small">Tema: Auto</button>
       <button id="btnExport" class="btn small">Export to Excel (CSV)</button>
@@ -98,7 +93,7 @@
     </div>
   </div>
 
-  <!-- Övre rad: inputs + timer + huvudknapp -->
+  <!-- Inputs + timer -->
   <div class="row-top">
     <div class="card pad">
       <div class="process-grid">
@@ -129,7 +124,7 @@
         <canvas id="chart" height="360"></canvas>
       </div>
       <div style="padding:6px 8px;color:#334155;background:#f8fafc;border-top:1px solid #e5e7eb;border-bottom-left-radius:10px;border-bottom-right-radius:10px;font-size:var(--fs-sm)">
-        <span id="help1">Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön streck = BRCT (5 snabbaste).</span>
+        <span id="help1"></span>
       </div>
     </div>
 
@@ -138,14 +133,15 @@
         <div id="thCycle">CYCLE</div>
         <div id="thTime">TIME(S)</div>
         <div id="thProblems">OBSERVED PROBLEMS</div>
+        <div> </div>
       </div>
       <div id="list" class="list"></div>
 
       <div style="padding:8px">
         <div class="kpis">
-          <div class="pill"><span id="kpiAvgLabel">Ø CT (medel):</span> <b id="kpiAvg">00:00.00</b></div>
-          <div class="pill"><span id="kpiBrctLabel">BRCT (5 snabbaste):</span> <b id="kpiBrct">–</b></div>
-          <div class="pill"><span id="kpiDLabel">D %:</span> <b id="kpiD">0.0%</b></div>
+          <div class="pill"><span id="kpiAvgLabel"></span> <b id="kpiAvg">00:00.00</b></div>
+          <div class="pill"><span id="kpiBrctLabel"></span> <b id="kpiBrct">–</b></div>
+          <div class="pill"><span id="kpiDLabel"></span> <b id="kpiD">0.0%</b></div>
         </div>
       </div>
     </div>
@@ -154,27 +150,19 @@
 
 <script>
 /* ===== i18n ===== */
-const L = {
-  sv:{ PROCESS:"PROCESS", DATE:"DATE", PH_PROCESS:"Ange processnamn…", PH_DATE:"yyyy-mm-dd",
-    TOGGLE_START:"Start", TOGGLE_LAP:"Varv",
-    RESET:"Nollställ", EXPORT:"Exportera till Excel (CSV)", THEME_AUTO:"Tema: Auto", THEME_LIGHT:"Tema: Ljust", THEME_DARK:"Tema: Mörkt",
-    STATUS_PREFIX:"Status: ", READY:"redo.", MEASURE:"Mäter…", SAVED:"Sparad.", RESETTED:"Återställd.",
-    HELP:"Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön streck = BRCT (5 snabbaste).",
-    CYCLE:"CYCLE", TIMES:"TIME(S)", PROBLEMS:"OBSERVED PROBLEMS",
-    KPI_AVG:"Ø CT (medel):", KPI_BRCT:"BRCT (5 snabbaste):", KPI_D:"D %:",
-    CSV_DECIMAL:",",
-    TIP_DELETE:"Tips: Markera en rad och tryck Delete för att radera."
-  },
-  en:{ PROCESS:"PROCESS", DATE:"DATE", PH_PROCESS:"Enter process name…", PH_DATE:"yyyy-mm-dd",
-    TOGGLE_START:"Start", TOGGLE_LAP:"Lap",
-    RESET:"Reset", EXPORT:"Export to Excel (CSV)", THEME_AUTO:"Theme: Auto", THEME_LIGHT:"Theme: Light", THEME_DARK:"Theme: Dark",
-    STATUS_PREFIX:"Status: ", READY:"ready.", MEASURE:"Measuring…", SAVED:"Saved.", RESETTED:"Reset.",
-    HELP:"Y-axis auto to longest cycle. Bars = cycles. Orange = Ø CT. Green dashed = BRCT (5 fastest).",
-    CYCLE:"CYCLE", TIMES:"TIME(S)", PROBLEMS:"OBSERVED PROBLEMS",
-    KPI_AVG:"Ø CT (mean):", KPI_BRCT:"BRCT (5 fastest):", KPI_D:"D %:",
-    CSV_DECIMAL:".",
-    TIP_DELETE:"Tip: Select a row and press Delete to remove it."
-  }
+const L={
+  sv:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Ange processnamn…",PH_DATE:"yyyy-mm-dd",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Varv",RESET:"Nollställ",EXPORT:"Exportera till Excel (CSV)",THEME_AUTO:"Tema: Auto",THEME_LIGHT:"Tema: Ljust",THEME_DARK:"Tema: Mörkt",
+      STATUS_PREFIX:"Status: ",READY:"redo.",MEASURE:"Mäter…",SAVED:"Sparad.",RESETTED:"Återställd.",
+      HELP:"Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön = BRCT (5 snabbaste). Tips: 🗑️ = radera rad.",
+      CYCLE:"CYCLE",TIMES:"TIME(S)",PROBLEMS:"OBSERVED PROBLEMS",
+      KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",KPI_D:"D %:",CSV_DECIMAL:","},
+  en:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Lap",RESET:"Reset",EXPORT:"Export to Excel (CSV)",THEME_AUTO:"Theme: Auto",THEME_LIGHT:"Theme: Light",THEME_DARK:"Theme: Dark",
+      STATUS_PREFIX:"Status: ",READY:"ready.",MEASURING:"Measuring…",MEASURE:"Measuring…",SAVED:"Saved.",RESETTED:"Reset.",
+      HELP:"Y-axis auto to longest cycle. Bars = cycles. Orange = Ø CT. Green = BRCT (5 fastest). Tip: 🗑️ = delete row.",
+      CYCLE:"CYCLE",TIMES:"TIME(S)",PROBLEMS:"OBSERVED PROBLEMS",
+      KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",KPI_D:"D %:",CSV_DECIMAL:"."}
 };
 let lang='sv';
 const $=s=>document.querySelector(s);
@@ -195,7 +183,7 @@ function applyTheme(mode){
   }else{
     applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); return;
   }
-  $('#btnTheme').textContent = theme==='auto' ? L[lang].THEME_AUTO : (theme==='light'?L[lang].THEME_LIGHT:L[lang].THEME_DARK);
+  $('#btnTheme').textContent=theme==='auto'?L[lang].THEME_AUTO:(theme==='light'?L[lang].THEME_LIGHT:L[lang].THEME_DARK);
 }
 
 /* ===== Helpers ===== */
@@ -223,7 +211,7 @@ function setLangTexts(){
   $('#date').placeholder=L[lang].PH_DATE;
   $('#btnExport').textContent=L[lang].EXPORT;
   $('#btnReset').textContent=L[lang].RESET;
-  $('#help1').textContent=L[lang].HELP + " " + L[lang].TIP_DELETE;
+  $('#help1').textContent=L[lang].HELP;
   $('#thCycle').textContent=L[lang].CYCLE;
   $('#thTime').textContent=L[lang].TIMES;
   $('#thProblems').textContent=L[lang].PROBLEMS;
@@ -240,7 +228,7 @@ function startTimer(){
   timerDisp.textContent='00:00.00';
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
   toggleBtn.textContent=L[lang].TOGGLE_LAP;
-  status(L[lang].MEASURE);
+  status(L[lang].MEASURE || L[lang].MEASURING || "Measuring…");
 }
 function addLap(ms,note=''){ laps.push({ms,note}); renderList(); drawChart(); updateKPIs(); }
 function lap(){ // spara & fortsätt direkt
@@ -252,8 +240,9 @@ function lap(){ // spara & fortsätt direkt
   timerDisp.textContent='00:00.00';
 }
 function toggle(){ running ? lap() : startTimer(); }
+toggleBtn.addEventListener('click', toggle);
 
-/* ===== Delete cykel (markera + Delete/Backspace) ===== */
+/* ===== Markera & radera rader ===== */
 function selectRow(ix){
   selectedIndex=ix;
   document.querySelectorAll('.list-row').forEach((r,i)=> r.classList.toggle('selected', i===ix));
@@ -264,8 +253,6 @@ function deleteSelected(){
   selectedIndex=-1;
   renderList(); drawChart(); updateKPIs();
 }
-
-toggleBtn.addEventListener('click', toggle);
 window.addEventListener('keydown', e=>{
   if(e.code==='Space'){
     if(e.repeat){ e.preventDefault(); return; }
@@ -278,7 +265,7 @@ window.addEventListener('keydown', e=>{
   if(e.key==='Delete' || e.key==='Backspace'){
     const ae=document.activeElement;
     const tag=ae && ae.tagName ? ae.tagName.toUpperCase(): '';
-    if(tag==='TEXTAREA' || tag==='INPUT'){ return; } // respektera textredigering
+    if(tag==='TEXTAREA' || tag==='INPUT'){ return; } // störa inte texteditering
     e.preventDefault();
     deleteSelected();
   }
@@ -295,7 +282,8 @@ function renderList(){
        <div class="cell time" data-label="${L[lang].TIMES}">${formatMs(l.ms)}</div>
        <div class="cell problems" data-label="${L[lang].PROBLEMS}">
          <textarea data-ix="${i}" placeholder=""></textarea>
-       </div>`;
+       </div>
+       <div class="delete-cell"><button class="delete-btn" title="Delete" data-ix="${i}">🗑️</button></div>`;
     list.appendChild(row);
     const ta=row.querySelector('textarea'); ta.value=l.note||'';
     // Händelser
@@ -303,6 +291,16 @@ function renderList(){
     ta.addEventListener('focus', ()=> selectRow(i));
     ta.addEventListener('input', e=>{ const ix=+e.target.dataset.ix; laps[ix].note=e.target.value; });
   });
+  // Delete-ikoner
+  list.querySelectorAll('.delete-btn').forEach(btn=>btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const ix=+e.currentTarget.dataset.ix;
+    laps.splice(ix,1);
+    // justera selectedIndex om behövs
+    if(selectedIndex===ix) selectedIndex=-1;
+    else if(selectedIndex>ix) selectedIndex--;
+    renderList(); drawChart(); updateKPIs();
+  }));
 }
 function avgMs(a){return a.length? a.reduce((x,y)=>x+y,0)/a.length:0}
 function brctMs(a){ if(a.length<5) return null; return avgMs([...a].sort((x,y)=>x-y).slice(0,5)); }
@@ -316,24 +314,58 @@ function drawChart(){
   const dpr=window.devicePixelRatio||1, W=chart.clientWidth*dpr, H=chart.clientHeight*dpr;
   chart.width=W; chart.height=H; ctx.clearRect(0,0,W,H);
   const padL=64*dpr, padR=16*dpr, padT=14*dpr, padB=34*dpr, innerW=W-padL-padR, innerH=H-padT-padB;
-  const maxMs=Math.max(10000,...laps.map(l=>l.ms)); const maxS=Math.ceil(maxMs/10000)*10; const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
+  const maxMs=Math.max(10000,...laps.map(l=>l.ms));
+  const maxS=Math.ceil(maxMs/10000)*10;
+  const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
+
   // ram
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1*dpr; ctx.strokeRect(padL,padT,innerW,innerH);
-  // grid y/30s
+
+  // grid / Y-etiketter var 30s
   ctx.fillStyle='#475569'; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
-  for(let s=0;s<=maxS;s+=30){ const y=msToY(s*1000); ctx.strokeStyle=s===0?'#cbd5e1':'#e5e7eb'; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
-    const m=Math.floor(s/60), sec=s%60; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y); }
+  for(let s=0;s<=maxS;s+=30){
+    const y=msToY(s*1000);
+    ctx.strokeStyle=s===0?'#cbd5e1':'#e5e7eb';
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    const m=Math.floor(s/60), sec=s%60;
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y);
+  }
+
   // staplar
-  const n=laps.length; if(n){ const gap=6*dpr, bw=Math.max(8*dpr,(innerW-gap*(n-1))/n); ctx.fillStyle='rgba(71,85,105,.75)';
-    laps.forEach((l,i)=>{ const x=padL+i*(bw+gap), y=msToY(l.ms), h=padT+innerH-y; ctx.fillRect(x,y,bw,h); });
+  const n=laps.length;
+  if(n){
+    const gap=6*dpr, bw=Math.max(8*dpr,(innerW-gap*(n-1))/n);
+    ctx.fillStyle='rgba(71,85,105,.75)';
+    laps.forEach((l,i)=>{
+      const x=padL+i*(bw+gap), y=msToY(l.ms), h=padT+innerH-y;
+      ctx.fillRect(x,y,bw,h);
+    });
     // x-etiketter
     ctx.fillStyle='#475569'; ctx.textAlign='center'; ctx.textBaseline='top';
-    for(let i=0;i<n;i++){ const gap2=6*dpr, bw2=Math.max(8*dpr,(innerW-gap2*(n-1))/n); const x=padL+i*(bw2+gap2)+bw2/2; ctx.fillText(String(i+1), x, H-padB+6*dpr); }
+    for(let i=0;i<n;i++){
+      const x=padL+i*((innerW-Math.max(8*dpr,(innerW-gap*(n-1))/n)*n)/(n-1)+bw+gap) + bw/2;
+      // För enkelhet: räkna om korrekt
+      const x2=padL+i*(bw+gap)+bw/2;
+      ctx.fillText(String(i+1), x2, H-padB+6*dpr);
+    }
   }
-  // medel
-  if(laps.length){ const mean=avgMs(laps.map(l=>l.ms)); const y=msToY(mean); ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+
+  // medellinje
+  if(laps.length){
+    const mean=avgMs(laps.map(l=>l.ms));
+    const y=msToY(mean);
+    ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2*dpr;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+  }
   // BRCT
-  if(laps.length>=5){ const br=brctMs(laps.map(l=>l.ms)); const y=msToY(br); ctx.strokeStyle='#22c55e'; ctx.setLineDash([5*dpr,5*dpr]); ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); ctx.setLineDash([]); }
+  if(laps.length>=5){
+    const br=brctMs(laps.map(l=>l.ms));
+    const y=msToY(br);
+    ctx.strokeStyle='#22c55e'; ctx.setLineDash([5*dpr,5*dpr]); ctx.lineWidth=2*dpr;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    ctx.setLineDash([]);
+  }
 }
 
 /* ===== Export/Reset/Language/Theme ===== */
@@ -352,7 +384,6 @@ $('#btnExport').addEventListener('click', ()=>{
   status(L[lang].SAVED);
 });
 $('#btnReset').addEventListener('click', ()=>{
-  // stoppa utan att logga nytt varv
   if(running){ clearInterval(tick); tick=null; running=false; }
   toggleBtn.textContent=L[lang].TOGGLE_START;
   timerDisp.textContent='00:00.00';
@@ -360,7 +391,8 @@ $('#btnReset').addEventListener('click', ()=>{
   renderList(); drawChart(); updateKPIs(); status(L[lang].RESETTED);
 });
 document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.addEventListener('click', ()=>{
-  lang=b.dataset.lang; try{localStorage.setItem('leantool_lang',lang)}catch{}; setLangTexts();
+  lang=b.dataset.lang; try{localStorage.setItem('leantool_lang',lang)}catch{};
+  setLangTexts();
 }));
 $('#btnTheme').addEventListener('click', ()=>{
   theme=theme==='auto'?'light':theme==='light'?'dark':'auto';
