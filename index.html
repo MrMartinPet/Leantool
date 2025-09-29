@@ -10,18 +10,23 @@
   :root{
     --bg:#f7f7f9; --paper:#ffffff; --ink:#0f172a; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb;
     --radius:10px; --tap:40px; --fs:clamp(13px,2.2vw,15px); --fs-sm:clamp(11px,1.9vw,13px);
+    --blue:#2563eb; --blue-600:#2563eb; --blue-500:#3b82f6; --blue-400:#60a5fa; --blue-300:#93c5fd;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;font-size:var(--fs);background:var(--bg);color:var(--ink)}
   .app{min-height:100%;padding:8px}
 
-  /* Menyrad */
-  .menubar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:6px 10px;margin-bottom:8px}
-  .logo{font-weight:800;font-size:16px;white-space:nowrap}
-  .menu-actions{display:flex;gap:6px;align-items:center}
+  /* Menyrad (kompakt, wrappar vid behov) */
+  .menubar{
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:6px 10px;margin-bottom:8px
+  }
+  .logo{font-weight:800;font-size:16px;white-space:nowrap;margin-right:auto}
+  .menu-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   .langbar{display:flex;gap:6px;align-items:center}
-  .flagbtn{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm);cursor:pointer}
+  .flagbtn{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm);cursor:pointer}
   .flagbtn.active{background:#eef2ff;border-color:#c7d2fe}
   .flag{font-size:16px;line-height:1}
 
@@ -34,7 +39,8 @@
   label{font-size:var(--fs-sm);color:var(--muted)}
   input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
-  .btn.primary{background:#2563eb;color:#fff;border-color:#1d4ed8}
+  .btn.primary{background:var(--blue);color:#fff;border-color:#1d4ed8}
+  .btn.secondary{background:#fff;border-color:var(--line)}
   .btn.danger{background:#fee2e2;border-color:#fecaca}
   .btn.small{min-height:34px;padding:6px 10px;font-size:var(--fs-sm)}
   .status{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:var(--fs-sm)}
@@ -44,13 +50,18 @@
   .chart-wrap{padding:6px}
   canvas{width:100%;height:360px;display:block}
 
-  /* Lista */
-  .list-head,.list-row{display:grid;grid-template-columns:48px 96px 1fr 40px;gap:6px;align-items:center}
-  .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:6px 8px;font-weight:600;z-index:1}
-  .list{max-height:460px;overflow:auto;border-top:1px solid var(--line)}
-  .list-row{padding:6px 8px;border-bottom:1px solid var(--line);background:#fff;cursor:pointer}
+  /* Lista – tydligare rader */
+  .list-head,.list-row{display:grid;grid-template-columns:56px 110px 1fr 40px;gap:8px;align-items:center}
+  .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px;font-weight:700;z-index:1}
+  .list{max-height:460px;overflow:auto;border-top:1px solid var(--line);padding:8px}
+  .list-row{
+    padding:10px; background:#fff; border:1px solid var(--line); border-radius:10px;
+    margin-bottom:8px; box-shadow:0 1px 2px rgba(0,0,0,.04);
+  }
+  .list-row:nth-child(odd){background:#f9fbff}
   .list-row.selected{outline:2px solid #93c5fd;background:#eff6ff}
-  textarea{width:100%;min-height:36px;border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:var(--fs-sm)}
+  .badge{display:inline-block;background:#e2e8f0;color:#334155;padding:4px 8px;border-radius:999px;font-size:var(--fs-sm);font-weight:600}
+  textarea{width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:var(--fs-sm)}
   .delete-btn{cursor:pointer;border:none;background:none;font-size:18px;line-height:1;color:#dc2626}
   .delete-btn:hover{color:#b91c1c}
 
@@ -64,7 +75,7 @@
   }
   @media (max-width:640px){
     .list-head{display:none}
-    .list{max-height:none}
+    .list{max-height:none;padding:8px}
     .list-row{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:
       "cycle time"
       "problems problems"
@@ -73,13 +84,15 @@
     .list-row .time{grid-area:time}
     .list-row .problems{grid-area:problems}
     .list-row .delete-cell{grid-area:delete;text-align:right}
+    .btn.small{padding:6px 8px}
+    .flagbtn{padding:4px 8px}
   }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- Menyrad -->
+  <!-- Menyrad (kompakt, wrappar) -->
   <div class="menubar">
     <div class="logo">20 Cycle Check</div>
     <div class="menu-actions">
@@ -93,7 +106,7 @@
     </div>
   </div>
 
-  <!-- Inputs + timer -->
+  <!-- Inputs + timer + Start/Varv + Stopp -->
   <div class="row-top">
     <div class="card pad">
       <div class="process-grid">
@@ -108,6 +121,7 @@
       </div>
       <div style="margin-top:6px" class="toolbar">
         <button id="btnToggle" class="btn primary">Start</button>
+        <button id="btnStop" class="btn secondary" disabled>Stoppa</button>
         <div id="status" class="status">Status: redo.</div>
       </div>
     </div>
@@ -152,14 +166,16 @@
 /* ===== i18n ===== */
 const L={
   sv:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Ange processnamn…",PH_DATE:"yyyy-mm-dd",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Varv",RESET:"Nollställ",EXPORT:"Exportera till Excel (CSV)",THEME_AUTO:"Tema: Auto",THEME_LIGHT:"Tema: Ljust",THEME_DARK:"Tema: Mörkt",
-      STATUS_PREFIX:"Status: ",READY:"redo.",MEASURE:"Mäter…",SAVED:"Sparad.",RESETTED:"Återställd.",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Varv",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Exportera till Excel (CSV)",THEME_AUTO:"Tema: Auto",THEME_LIGHT:"Tema: Ljust",THEME_DARK:"Tema: Mörkt",
+      STATUS_PREFIX:"Status: ",READY:"redo.",MEASURE:"Mäter…",SAVED:"Sparad.",STOPPED:"Stoppad.",RESETTED:"Återställd.",
+      CONFIRM_RESET:"Är du säker på att du vill nollställa hela mätningen?",
       HELP:"Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön = BRCT (5 snabbaste). Tips: 🗑️ = radera rad.",
       CYCLE:"CYCLE",TIMES:"TIME(S)",PROBLEMS:"OBSERVED PROBLEMS",
       KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",KPI_D:"D %:",CSV_DECIMAL:","},
   en:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Lap",RESET:"Reset",EXPORT:"Export to Excel (CSV)",THEME_AUTO:"Theme: Auto",THEME_LIGHT:"Theme: Light",THEME_DARK:"Theme: Dark",
-      STATUS_PREFIX:"Status: ",READY:"ready.",MEASURING:"Measuring…",MEASURE:"Measuring…",SAVED:"Saved.",RESETTED:"Reset.",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Lap",STOP:"Stop",RESET:"Reset",EXPORT:"Export to Excel (CSV)",THEME_AUTO:"Theme: Auto",THEME_LIGHT:"Theme: Light",THEME_DARK:"Theme: Dark",
+      STATUS_PREFIX:"Status: ",READY:"ready.",MEASURE:"Measuring…",SAVED:"Saved.",STOPPED:"Stopped.",RESETTED:"Reset.",
+      CONFIRM_RESET:"Are you sure you want to reset the entire measurement?",
       HELP:"Y-axis auto to longest cycle. Bars = cycles. Orange = Ø CT. Green = BRCT (5 fastest). Tip: 🗑️ = delete row.",
       CYCLE:"CYCLE",TIMES:"TIME(S)",PROBLEMS:"OBSERVED PROBLEMS",
       KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",KPI_D:"D %:",CSV_DECIMAL:"."}
@@ -197,7 +213,7 @@ let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
 
 /* ===== UI refs ===== */
-const toggleBtn=$('#btnToggle'), timerDisp=$('#timerDisp'), statusEl=$('#status');
+const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp'), statusEl=$('#status');
 const chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
 
 /* ===== Status ===== */
@@ -216,11 +232,12 @@ function setLangTexts(){
   $('#thTime').textContent=L[lang].TIMES;
   $('#thProblems').textContent=L[lang].PROBLEMS;
   toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
+  stopBtn.textContent = L[lang].STOP;
   document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
   renderList();
 }
 
-/* ===== Timer (start/lap only) ===== */
+/* ===== Timer (Start / Lap / Stop) ===== */
 function startTimer(){
   if(running) return;
   running=true;
@@ -228,7 +245,8 @@ function startTimer(){
   timerDisp.textContent='00:00.00';
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
   toggleBtn.textContent=L[lang].TOGGLE_LAP;
-  status(L[lang].MEASURE || L[lang].MEASURING || "Measuring…");
+  stopBtn.disabled=false;
+  status(L[lang].MEASURE);
 }
 function addLap(ms,note=''){ laps.push({ms,note}); renderList(); drawChart(); updateKPIs(); }
 function lap(){ // spara & fortsätt direkt
@@ -239,8 +257,38 @@ function lap(){ // spara & fortsätt direkt
   tStart=performance.now();
   timerDisp.textContent='00:00.00';
 }
+function stopTimer(){
+  if(!running) return;
+  clearInterval(tick); tick=null; running=false;
+  stopBtn.disabled=true;
+  timerDisp.textContent='00:00.00';
+  toggleBtn.textContent=L[lang].TOGGLE_START;
+  status(L[lang].STOPPED);
+}
 function toggle(){ running ? lap() : startTimer(); }
+
 toggleBtn.addEventListener('click', toggle);
+stopBtn.addEventListener('click', stopTimer);
+
+/* ===== Tangentbord ===== */
+window.addEventListener('keydown', e=>{
+  const ae=document.activeElement;
+  const tag=ae && ae.tagName ? ae.tagName.toUpperCase(): '';
+  if(e.code==='Space'){
+    if(e.repeat){ e.preventDefault(); return; }
+    if(tag==='TEXTAREA' || (tag==='INPUT' && (ae.type||'').toLowerCase()!=='button')) return;
+    e.preventDefault();
+    running ? lap() : startTimer();
+  }
+  if(e.key.toLowerCase()==='s'){ // s = stop
+    if(tag!=='TEXTAREA' && tag!=='INPUT'){ e.preventDefault(); stopTimer(); }
+  }
+  if(e.key==='Delete' || e.key==='Backspace'){
+    if(tag==='TEXTAREA' || tag==='INPUT'){ return; }
+    e.preventDefault();
+    deleteSelected();
+  }
+});
 
 /* ===== Markera & radera rader ===== */
 function selectRow(ix){
@@ -253,23 +301,6 @@ function deleteSelected(){
   selectedIndex=-1;
   renderList(); drawChart(); updateKPIs();
 }
-window.addEventListener('keydown', e=>{
-  if(e.code==='Space'){
-    if(e.repeat){ e.preventDefault(); return; }
-    const ae=document.activeElement;
-    const tag=ae && ae.tagName ? ae.tagName.toUpperCase(): '';
-    if(tag==='TEXTAREA' || (tag==='INPUT' && (ae.type||'').toLowerCase()!=='button')) return;
-    e.preventDefault();
-    running ? lap() : startTimer();
-  }
-  if(e.key==='Delete' || e.key==='Backspace'){
-    const ae=document.activeElement;
-    const tag=ae && ae.tagName ? ae.tagName.toUpperCase(): '';
-    if(tag==='TEXTAREA' || tag==='INPUT'){ return; } // störa inte texteditering
-    e.preventDefault();
-    deleteSelected();
-  }
-});
 
 /* ===== Lista/KPI/Diagram ===== */
 function renderList(){
@@ -278,27 +309,23 @@ function renderList(){
     const row=document.createElement('div'); row.className='list-row';
     if(i===selectedIndex) row.classList.add('selected');
     row.innerHTML=
-      `<div class="cell cycle" data-label="${L[lang].CYCLE}">${i+1}</div>
-       <div class="cell time" data-label="${L[lang].TIMES}">${formatMs(l.ms)}</div>
-       <div class="cell problems" data-label="${L[lang].PROBLEMS}">
+      `<div class="cell cycle"><span class="badge">#${i+1}</span></div>
+       <div class="cell time"><b>${formatMs(l.ms)}</b></div>
+       <div class="cell problems">
          <textarea data-ix="${i}" placeholder=""></textarea>
        </div>
        <div class="delete-cell"><button class="delete-btn" title="Delete" data-ix="${i}">🗑️</button></div>`;
     list.appendChild(row);
     const ta=row.querySelector('textarea'); ta.value=l.note||'';
-    // Händelser
     row.addEventListener('click', ()=> selectRow(i));
     ta.addEventListener('focus', ()=> selectRow(i));
     ta.addEventListener('input', e=>{ const ix=+e.target.dataset.ix; laps[ix].note=e.target.value; });
   });
-  // Delete-ikoner
   list.querySelectorAll('.delete-btn').forEach(btn=>btn.addEventListener('click',e=>{
     e.stopPropagation();
     const ix=+e.currentTarget.dataset.ix;
     laps.splice(ix,1);
-    // justera selectedIndex om behövs
-    if(selectedIndex===ix) selectedIndex=-1;
-    else if(selectedIndex>ix) selectedIndex--;
+    if(selectedIndex===ix) selectedIndex=-1; else if(selectedIndex>ix) selectedIndex--;
     renderList(); drawChart(); updateKPIs();
   }));
 }
@@ -310,6 +337,8 @@ function updateKPIs(){
   $('#kpiBrct').textContent=br!==null?formatMs(Math.round(br)):'–';
   const D=(avg>0&&br!==null)?((avg-br)/avg*100):0; $('#kpiD').textContent=`${D.toFixed(1)}%`;
 }
+
+/* ===== Diagram (blå nyanser på staplarna) ===== */
 function drawChart(){
   const dpr=window.devicePixelRatio||1, W=chart.clientWidth*dpr, H=chart.clientHeight*dpr;
   chart.width=W; chart.height=H; ctx.clearRect(0,0,W,H);
@@ -332,83 +361,10 @@ function drawChart(){
     ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y);
   }
 
-  // staplar
+  // staplar – blå palett (nyanser)
   const n=laps.length;
   if(n){
     const gap=6*dpr, bw=Math.max(8*dpr,(innerW-gap*(n-1))/n);
-    ctx.fillStyle='rgba(71,85,105,.75)';
-    laps.forEach((l,i)=>{
-      const x=padL+i*(bw+gap), y=msToY(l.ms), h=padT+innerH-y;
-      ctx.fillRect(x,y,bw,h);
-    });
-    // x-etiketter
-    ctx.fillStyle='#475569'; ctx.textAlign='center'; ctx.textBaseline='top';
     for(let i=0;i<n;i++){
-      const x=padL+i*((innerW-Math.max(8*dpr,(innerW-gap*(n-1))/n)*n)/(n-1)+bw+gap) + bw/2;
-      // För enkelhet: räkna om korrekt
-      const x2=padL+i*(bw+gap)+bw/2;
-      ctx.fillText(String(i+1), x2, H-padB+6*dpr);
-    }
-  }
-
-  // medellinje
-  if(laps.length){
-    const mean=avgMs(laps.map(l=>l.ms));
-    const y=msToY(mean);
-    ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2*dpr;
-    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
-  }
-  // BRCT
-  if(laps.length>=5){
-    const br=brctMs(laps.map(l=>l.ms));
-    const y=msToY(br);
-    ctx.strokeStyle='#22c55e'; ctx.setLineDash([5*dpr,5*dpr]); ctx.lineWidth=2*dpr;
-    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-}
-
-/* ===== Export/Reset/Language/Theme ===== */
-$('#btnExport').addEventListener('click', ()=>{
-  const headers=['Process','Date','Cycle','Time_mm:ss.cc','Time_s','Observed_problems'];
-  const proc=$('#process').value||'', dat=$('#date').value||'';
-  const rows=laps.map((l,i)=>[`"${proc}"`,`"${dat}"`,`"${i+1}"`,`"${formatMs(l.ms)}"`,`"${formatSecondsForCSV(l.ms)}"`,`"${(l.note||'').replaceAll('"','""')}"`].join(';'));
-  const csv=headers.join(';')+'\r\n'+rows.join('\r\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');
-  const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  a.href=URL.createObjectURL(blob);
-  a.download=`20-cycle-check_${ts}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  status(L[lang].SAVED);
-});
-$('#btnReset').addEventListener('click', ()=>{
-  if(running){ clearInterval(tick); tick=null; running=false; }
-  toggleBtn.textContent=L[lang].TOGGLE_START;
-  timerDisp.textContent='00:00.00';
-  laps=[]; selectedIndex=-1;
-  renderList(); drawChart(); updateKPIs(); status(L[lang].RESETTED);
-});
-document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.addEventListener('click', ()=>{
-  lang=b.dataset.lang; try{localStorage.setItem('leantool_lang',lang)}catch{};
-  setLangTexts();
-}));
-$('#btnTheme').addEventListener('click', ()=>{
-  theme=theme==='auto'?'light':theme==='light'?'dark':'auto';
-  try{localStorage.setItem('leantool_theme',theme)}catch{};
-  applyTheme(theme);
-});
-
-/* ===== Init ===== */
-(function init(){
-  try{ lang=localStorage.getItem('leantool_lang') || (navigator.language||'sv').slice(0,2); if(!L[lang]) lang='sv'; }catch{}
-  try{ theme=localStorage.getItem('leantool_theme') || 'auto'; }catch{}
-  applyTheme(theme); setLangTexts();
-  const d=new Date(); $('#date').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  drawChart(); updateKPIs();
-  window.addEventListener('resize', drawChart);
-})();
-</script>
-</body>
-</html>
+      const l=laps[i];
+      const x=padL+i*(bw+gap), y=msToY(l*
