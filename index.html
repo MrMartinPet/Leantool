@@ -245,22 +245,44 @@ let running=false, tStart=0, tick=null;
 const timerDisp=$('#timerDisp'), statusEl=$('#status'), chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
 function status(s){ statusEl.textContent = L[lang].STATUS_PREFIX + s; }
 
-/* ===== Timer Toggle ===== */
-function toggle(){
-  if(!running){
-    running=true; tStart=performance.now();
-    tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
-    toggleBtn.textContent=L[lang].TOGGLE_STOP; status(L[lang].MEASURE);
-  }else{
-    clearInterval(tick); tick=null; running=false;
-    const ms=Math.max(10, performance.now()-tStart);
-    addLap(ms);
-    timerDisp.textContent='00:00.00';
-    toggleBtn.textContent=L[lang].TOGGLE_START; status(L[lang].SAVED);
-  }
+/* ===== Timer: start/stop/lap/toggle ===== */
+function startTimer(){
+  if(running) return;
+  running=true;
+  tStart=performance.now();
+  timerDisp.textContent='00:00.00';
+  tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
+  toggleBtn.textContent=L[lang].TOGGLE_STOP;
+  status(L[lang].MEASURE);
 }
+
+function stopTimer(recordLap=true){
+  if(!running) return;
+  clearInterval(tick); tick=null; running=false;
+  const elapsed=Math.max(10, performance.now()-tStart);
+  if(recordLap){
+    addLap(elapsed);
+    status(L[lang].SAVED);
+  }else{
+    status(L[lang].STOPPED);
+  }
+  timerDisp.textContent='00:00.00';
+  toggleBtn.textContent=L[lang].TOGGLE_START;
+}
+
+function lap(){
+  if(!running) return;
+  const elapsed=Math.max(10, performance.now()-tStart);
+  addLap(elapsed);
+  status(L[lang].SAVED);
+  tStart=performance.now();
+  timerDisp.textContent='00:00.00';
+}
+
+function toggle(){ running ? stopTimer(true) : startTimer(); }
 toggleBtn.addEventListener('click', toggle);
 
+/* ===== Keyboard handling ===== */
 function allowSpaceToggle(active){
   if(!active || active===document.body || active===document.documentElement) return true;
   if(active===toggleBtn) return true;
@@ -268,7 +290,10 @@ function allowSpaceToggle(active){
   if(active.tagName){
     const tag=active.tagName.toUpperCase();
     if(tag==='TEXTAREA') return false;
-    if(tag==='INPUT'){ const type=(active.type||'').toLowerCase(); if(type && type!=='button' && type!=='submit') return false; }
+    if(tag==='INPUT'){
+      const type=(active.type||'').toLowerCase();
+      if(type && type!=='button' && type!=='submit') return false;
+    }
     if(tag==='BUTTON') return active===toggleBtn;
   }
   return false;
@@ -279,7 +304,11 @@ window.addEventListener('keydown', e=>{
   if(e.repeat){ e.preventDefault(); return; }
   if(!allowSpaceToggle(document.activeElement)) return;
   e.preventDefault();
-  toggle();
+  if(running){
+    lap();
+  }else{
+    startTimer();
+  }
 });
 
 /* ===== Laps/List/Stats ===== */
@@ -334,7 +363,8 @@ $('#btnAdd').addEventListener('click', ()=>{
   addLap(ms); status(L[lang].SAVED);
 });
 $('#btnReset').addEventListener('click', ()=>{
-  if(running){ toggle(); } laps=[]; renderList(); drawChart(); updateKPIs(); status(L[lang].RESETTED); timerDisp.textContent='00:00.00';
+  if(running){ stopTimer(false); }
+  laps=[]; renderList(); drawChart(); updateKPIs(); status(L[lang].RESETTED); timerDisp.textContent='00:00.00';
 });
 $('#btnExport').addEventListener('click', ()=>{
   const headers=['Process','Date','Cycle','Time_mm:ss.cc','Time_s','Observed_problems'];
