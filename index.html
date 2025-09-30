@@ -17,7 +17,7 @@
   body{font-family:system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;font-size:var(--fs);background:var(--bg);color:var(--ink)}
   .app{min-height:100%;padding:8px}
 
-  /* Menyrad – allt får plats även i mobil */
+  /* Menyrad */
   .menubar{
     display:flex;flex-wrap:wrap;align-items:center;gap:8px;
     background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
@@ -30,27 +30,26 @@
     padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm);cursor:pointer
   }
   .flag{font-size:16px;line-height:1}
-
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
   .btn.primary{background:var(--blue-600);color:#fff;border-color:#1d4ed8}
   .btn.secondary{background:#fff;border-color:var(--line)}
   .btn.danger{background:#fee2e2;border-color:#fecaca}
   .btn.small{min-height:34px;padding:6px 10px;font-size:var(--fs-sm)}
 
-  /* Korten högst upp: Språk + Process/Date, samt Start/Timer/Stop */
+  /* Övre grid: Språk/Process/Datum + Start/Timer/Stop */
   .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
   .pad{padding:8px}
   label{font-size:var(--fs-sm);color:var(--muted)}
   input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
 
-  .lang-card .row1{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  .lang-card .row2{display:grid;grid-template-columns:1fr 160px;gap:8px;margin-top:8px}
+  .lang-card .row2{display:grid;grid-template-columns:1fr 160px;gap:8px}
   .timer-card .controls{display:flex;gap:8px;align-items:center}
+  .timer-card .controls > *{min-width:0} /* förhindrar overflow */
   .timer-card .start{flex:0 0 35%}
   .timer-card .mid{flex:0 0 50%;display:flex;justify-content:center}
   .timer-card .stop{flex:0 0 15%}
-  .timer{font-weight:800;font-size:18px;background:#0a0;color:#fff;padding:10px 12px;border-radius:8px;text-align:center;min-width:120px}
+  .timer{font-weight:800;font-size:18px;background:#0a0;color:#fff;padding:10px 12px;border-radius:8px;text-align:center;min-width:0;width:100%}
 
   /* Resultat + diagram */
   .wrap{display:grid;grid-template-columns:1.2fr 0.8fr;gap:8px;margin-top:8px}
@@ -110,13 +109,9 @@
     </div>
   </div>
 
-  <!-- Språk + Process/Datum  |  Start/Timer/Stop -->
+  <!-- Språk/Process/Datum  |  Start/Timer/Stop -->
   <div class="top-grid">
     <div class="card pad lang-card">
-      <div class="row1">
-        <!-- samma språkknapp visas även här om du vill; vi behåller endast i menyraden för plats -->
-        <label id="lblInfo" style="color:var(--muted);font-size:var(--fs-sm)"></label>
-      </div>
       <div class="row2">
         <div>
           <label id="lblProcess">PROCESS</label>
@@ -168,14 +163,14 @@
 <script>
 /* ===== i18n ===== */
 const L={
-  sv:{INFO:"Språk: Svenska (tryck för att växla)",PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Ange processnamn…",PH_DATE:"yyyy-mm-dd",
+  sv:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Ange processnamn…",PH_DATE:"yyyy-mm-dd",
       TOGGLE_START:"Start",TOGGLE_LAP:"Varv",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Exportera",
-      RESULTS_TITLE:"Resultat",AXIS_LABEL:"Tid (mm:ss)",
+      RESULTS_TITLE:"Resultat",
       KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:","},
-  en:{INFO:"Language: English (tap to toggle)",PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
+  en:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
       TOGGLE_START:"Start",TOGGLE_LAP:"Lap",STOP:"Stop",RESET:"Reset",EXPORT:"Export",
-      RESULTS_TITLE:"Results",AXIS_LABEL:"Time (mm:ss)",
+      RESULTS_TITLE:"Results",
       KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:"."}
 };
@@ -191,7 +186,12 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[]; // {ms,note}
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
-const STORAGE_KEY='cycle-check-state-v2';
+const STORAGE_KEY='cycle-check-state-v3';
+
+/* Animation state for bars */
+let animTargets=[];   // target heights in ms
+let animProgress=[];  // 0..1 per bar
+let animRunning=false;
 
 /* ===== UI refs ===== */
 const processInput=$('#process'), dateInput=$('#date');
@@ -200,7 +200,6 @@ const chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
 
 /* ===== i18n apply ===== */
 function setLangTexts(){
-  $('#lblInfo').textContent=L[lang].INFO;
   $('#lblProcess').textContent=L[lang].PROCESS;
   $('#lblDate').textContent=L[lang].DATE;
   $('#process').placeholder=L[lang].PH_PROCESS;
@@ -212,7 +211,6 @@ function setLangTexts(){
   $('#kpiBrctLabel').textContent=L[lang].KPI_BRCT;
   toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
   stopBtn.textContent = L[lang].STOP;
-  // topp-knapp etikett + flagga
   $('#langLabel').textContent = lang==='sv'?'SV':'EN';
   $('#btnLang').querySelector('.flag').textContent = lang==='sv'?'🇸🇪':'🇬🇧';
   renderList();
@@ -230,7 +228,11 @@ function startTimer(){
 }
 function addLap(ms,note=''){
   laps.push({ms,note});
-  refreshUI();
+  // setup animation for the new bar
+  animTargets = laps.map(l=>l.ms);
+  animProgress = laps.map((_,i)=> i===laps.length-1 ? 0 : 1); // new bar animates, old bars already at 1
+  animateBars();
+  refreshUI({save:true,skipDraw:true}); // draw handled by animation
 }
 function lap(){
   if(!running) return;
@@ -280,6 +282,8 @@ function deleteSelected(){
   if(selectedIndex<0 || selectedIndex>=laps.length) return;
   laps.splice(selectedIndex,1);
   selectedIndex=-1;
+  animTargets = laps.map(l=>l.ms);
+  animProgress = laps.map(()=>1);
   refreshUI();
 }
 
@@ -290,7 +294,7 @@ function renderList(){
     const row=document.createElement('div'); row.className='list-row';
     if(i===selectedIndex) row.classList.add('selected');
     row.innerHTML=
-      `<div class="cell cycle"><span class="badge">#${i+1}</span></div>
+      `<div class="cell cycle"><span class="badge">${i+1}</span></div>
        <div class="cell time"><b>${formatMs(l.ms)}</b></div>
        <div class="cell problems">
          <textarea data-ix="${i}" placeholder="Notes / Problem"></textarea>
@@ -307,6 +311,8 @@ function renderList(){
     const ix=+e.currentTarget.dataset.ix;
     laps.splice(ix,1);
     if(selectedIndex===ix) selectedIndex=-1; else if(selectedIndex>ix) selectedIndex--;
+    animTargets = laps.map(l=>l.ms);
+    animProgress = laps.map(()=>1);
     refreshUI();
   }));
 }
@@ -319,8 +325,8 @@ function updateKPIs(){
   $('#kpiBrct').textContent=br!==null?formatMs(Math.round(br)):'–';
 }
 
-/* ===== Diagram med vänster tidsaxel och linjeetiketter ===== */
-function drawChart(){
+/* ===== Diagram (vänster tidsaxel, alla staplar får plats, animation) ===== */
+function drawChart(progressOverride=null){
   const dpr=window.devicePixelRatio||1;
   const c=document.getElementById('chart');
   const clientW=Math.max(1,c.clientWidth), clientH=Math.max(1,c.clientHeight);
@@ -331,14 +337,20 @@ function drawChart(){
   ctx.clearRect(0,0,W,H);
   if(innerW<=0 || innerH<=0) return;
 
-  const maxMs=laps.length?Math.max(...laps.map(l=>l.ms),10000):10000;
-  const maxS=Math.max(10,Math.ceil(maxMs/1000/10)*10);
+  const values = laps.map((l,i)=>{
+    const target = animTargets[i] ?? l.ms;
+    const p = (progressOverride!==null) ? progressOverride : (animProgress[i] ?? 1);
+    return target * Math.min(1, Math.max(0,p));
+  });
+
+  const maxMsTmp = values.length ? Math.max(...values,10000) : 10000;
+  const maxS=Math.max(10,Math.ceil(maxMsTmp/1000/10)*10);
   const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
 
   // ram
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1*dpr; ctx.strokeRect(padL,padT,innerW,innerH);
 
-  // vänster tidsaxel + grid
+  // vänster tidsaxel + grid (00:00, 00:30, 01:00, ...)
   ctx.fillStyle='#475569'; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
   ctx.textBaseline='middle';
   for(let s=0;s<=maxS;s+=30){
@@ -348,32 +360,23 @@ function drawChart(){
     const m=Math.floor(s/60), sec=s%60;
     ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y);
   }
-  // Y-axelrubrik
-  ctx.save();
-  ctx.fillStyle='#0f172a';
-  ctx.font=`${12*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-  ctx.translate(padL/2, padT+innerH/2);
-  ctx.rotate(-Math.PI/2);
-  ctx.fillText(L[lang].AXIS_LABEL,0,0);
-  ctx.restore();
 
-  // staplar
-  const n=laps.length;
+  // staplar – rym alla (upp till 20+)
+  const n=values.length;
   if(n){
-    const gap=6*dpr, bw=Math.max(10*dpr,(innerW-gap*(n-1))/n);
+    const gap=4*dpr;
+    const bw=Math.max(8*dpr,(innerW-gap*(n-1))/n); // alltid inom rutan
     const palette=['#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb'];
     for(let i=0;i<n;i++){
-      const l=laps[i];
+      const ms=values[i];
       const x=padL+i*(bw+gap);
-      const y=msToY(l.ms);
+      const y=msToY(ms);
       const h=msToY(0)-y;
       ctx.fillStyle=palette[i%palette.length];
-      ctx.fillRect(x,y,bw,h);
+      ctx.fillRect(Math.round(x),Math.round(y),Math.floor(bw),Math.max(0,Math.round(h)));
       ctx.fillStyle='#1f2937'; ctx.font=`${10*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
       ctx.textAlign='center'; ctx.textBaseline='top';
-      ctx.fillText(`#${i+1}`,x+bw/2,H-padB+6*dpr);
+      ctx.fillText(`${i+1}`,x+bw/2,H-padB+6*dpr);
     }
 
     // Ø CT & BRCT linjer + etiketter med värde
@@ -403,9 +406,31 @@ function drawChart(){
   }
 }
 
-function refreshUI({save=true}={}){
+/* enkel animationsloop för senaste stapeln */
+function animateBars(){
+  if(animRunning) return;
+  animRunning=true;
+  const start=performance.now();
+  const DUR=400; // ms
+  function step(now){
+    const t=Math.min(1,(now-start)/DUR);
+    // öka bara de som <1
+    let still=false;
+    animProgress = animProgress.map(p=>{
+      const np = Math.min(1, p + 0.08); // smidig easing
+      if(np<1) still=true;
+      return Math.max(p,np);
+    });
+    drawChart();
+    if(still) requestAnimationFrame(step);
+    else animRunning=false;
+  }
+  requestAnimationFrame(step);
+}
+
+function refreshUI({save=true,skipDraw=false}={}){
   renderList();
-  drawChart();
+  if(!skipDraw) drawChart();
   updateKPIs();
   if(save) saveState();
 }
@@ -434,6 +459,8 @@ function loadState(){
       }
       if(typeof stored.process==='string') processInput.value=stored.process;
       if(typeof stored.date==='string') dateInput.value=stored.date;
+      animTargets = laps.map(l=>l.ms);
+      animProgress = laps.map(()=>1);
     }
   }catch(err){ console.warn('Failed to load state', err); }
 }
@@ -453,7 +480,7 @@ function exportCSV(){
   rows.push([]);
   rows.push(['Cycle','ms','sec','Notes']);
   laps.forEach((lap,i)=>{
-    rows.push([`#${i+1}`, lap.ms, formatSecondsForCSV(lap.ms), (lap.note||'').replace(/\n/g,' ')]);
+    rows.push([`${i+1}`, lap.ms, formatSecondsForCSV(lap.ms), (lap.note||'').replace(/\n/g,' ')]);
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
@@ -466,6 +493,7 @@ function resetApp(){
   if(!confirm(lang==='sv'?'Är du säker på att du vill nollställa?':'Are you sure you want to reset?')) return;
   if(running){ stopTimer(); }
   laps=[]; selectedIndex=-1; processInput.value=''; dateInput.value='';
+  animTargets=[]; animProgress=[];
   refreshUI();
 }
 
