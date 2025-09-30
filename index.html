@@ -47,6 +47,10 @@
   .timer{font-weight:800;font-size:16px;background:#0a0;color:#fff;padding:6px 10px;border-radius:8px;text-align:center;white-space:nowrap}
 
   .wrap{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px}
+  .chart-card{display:flex;flex-direction:column}
+  .chart-header{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .chart-title{margin:0;font-size:18px;font-weight:700;color:var(--ink);letter-spacing:0.01em}
+  .chart-card .kpis{width:100%}
   .chart-wrap{padding:6px}
   canvas{width:100%;height:360px;display:block}
 
@@ -86,6 +90,7 @@
     .list-row .delete-cell{grid-area:delete;text-align:right}
     .btn.small{padding:6px 8px}
     .flagbtn{padding:4px 8px}
+    .chart-card .kpis{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -133,7 +138,15 @@
 
   <!-- Diagram + lista -->
   <div class="wrap">
-    <div class="card">
+    <div class="card chart-card">
+      <div class="chart-header pad">
+        <h3 id="resultsTitle" class="chart-title">Result values</h3>
+        <div class="kpis">
+          <div class="pill"><span id="kpiAvgLabel"></span> <b id="kpiAvg">00:00.00</b></div>
+          <div class="pill"><span id="kpiBrctLabel"></span> <b id="kpiBrct">–</b></div>
+          <div class="pill"><span id="kpiDLabel"></span> <b id="kpiD">0.0%</b></div>
+        </div>
+      </div>
       <div class="chart-wrap">
         <canvas id="chart" height="360"></canvas>
       </div>
@@ -150,14 +163,6 @@
         <div> </div>
       </div>
       <div id="list" class="list"></div>
-
-      <div style="padding:8px">
-        <div class="kpis">
-          <div class="pill"><span id="kpiAvgLabel"></span> <b id="kpiAvg">00:00.00</b></div>
-          <div class="pill"><span id="kpiBrctLabel"></span> <b id="kpiBrct">–</b></div>
-          <div class="pill"><span id="kpiDLabel"></span> <b id="kpiD">0.0%</b></div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -171,14 +176,18 @@ const L={
       CONFIRM_RESET:"Är du säker på att du vill nollställa hela mätningen?",
       HELP:"Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön = BRCT (5 snabbaste). Tips: 🗑️ = radera rad.",
       CYCLE:"CYCLE",TIMES:"TIME(S)",PROBLEMS:"OBSERVED PROBLEMS",
-      KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",KPI_D:"D %:",CSV_DECIMAL:","},
+      RESULTS_TITLE:"RESULTAT",AXIS_LABEL:"Tid (mm:ss)",
+      KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",KPI_D:"D %:",
+      KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:","},
   en:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
       TOGGLE_START:"Start",TOGGLE_LAP:"Lap",STOP:"Stop",RESET:"Reset",EXPORT:"Export to Excel (CSV)",THEME_AUTO:"Theme: Auto",THEME_LIGHT:"Theme: Light",THEME_DARK:"Theme: Dark",
       STATUS_PREFIX:"Status: ",READY:"ready.",MEASURE:"Measuring…",SAVED:"Saved.",STOPPED:"Stopped.",RESETTED:"Reset.",
       CONFIRM_RESET:"Are you sure you want to reset the entire measurement?",
       HELP:"Y-axis auto to longest cycle. Bars = cycles. Orange = Ø CT. Green = BRCT (5 fastest). Tip: 🗑️ = delete row.",
       CYCLE:"CYCLE",TIMES:"TIME(S)",PROBLEMS:"OBSERVED PROBLEMS",
-      KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",KPI_D:"D %:",CSV_DECIMAL:"."}
+      RESULTS_TITLE:"Results",AXIS_LABEL:"Time (mm:ss)",
+      KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",KPI_D:"D %:",
+      KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:"."}
 };
 let lang='sv';
 const $=s=>document.querySelector(s);
@@ -211,8 +220,10 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[]; // {ms,note}
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
+const STORAGE_KEY='cycle-check-state-v1';
 
 /* ===== UI refs ===== */
+const processInput=$('#process'), dateInput=$('#date');
 const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp'), statusEl=$('#status');
 const chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
 
@@ -231,6 +242,10 @@ function setLangTexts(){
   $('#thCycle').textContent=L[lang].CYCLE;
   $('#thTime').textContent=L[lang].TIMES;
   $('#thProblems').textContent=L[lang].PROBLEMS;
+  $('#resultsTitle').textContent=L[lang].RESULTS_TITLE;
+  $('#kpiAvgLabel').textContent=L[lang].KPI_AVG;
+  $('#kpiBrctLabel').textContent=L[lang].KPI_BRCT;
+  $('#kpiDLabel').textContent=L[lang].KPI_D;
   toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
   stopBtn.textContent = L[lang].STOP;
   document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
@@ -248,8 +263,11 @@ function startTimer(){
   stopBtn.disabled=false;
   status(L[lang].MEASURE);
 }
-function addLap(ms,note=''){ laps.push({ms,note}); renderList(); drawChart(); updateKPIs(); }
-function lap(){ // spara & fortsätt direkt
+function addLap(ms,note=''){
+  laps.push({ms,note});
+  refreshUI();
+}
+function lap(){
   if(!running) return;
   const elapsed=Math.max(10, performance.now()-tStart);
   addLap(elapsed);
@@ -258,12 +276,13 @@ function lap(){ // spara & fortsätt direkt
   timerDisp.textContent='00:00.00';
 }
 function stopTimer(){
-  if(!running) return;
-  clearInterval(tick); tick=null; running=false;
-  stopBtn.disabled=true;
+  if(running){
+    clearInterval(tick); tick=null; running=false;
+    stopBtn.disabled=true;
+    toggleBtn.textContent=L[lang].TOGGLE_START;
+    status(L[lang].STOPPED);
+  }
   timerDisp.textContent='00:00.00';
-  toggleBtn.textContent=L[lang].TOGGLE_START;
-  status(L[lang].STOPPED);
 }
 function toggle(){ running ? lap() : startTimer(); }
 
@@ -280,7 +299,7 @@ window.addEventListener('keydown', e=>{
     e.preventDefault();
     running ? lap() : startTimer();
   }
-  if(e.key.toLowerCase()==='s'){ // s = stop
+  if(e.key && e.key.toLowerCase()==='s'){
     if(tag!=='TEXTAREA' && tag!=='INPUT'){ e.preventDefault(); stopTimer(); }
   }
   if(e.key==='Delete' || e.key==='Backspace'){
@@ -299,7 +318,8 @@ function deleteSelected(){
   if(selectedIndex<0 || selectedIndex>=laps.length) return;
   laps.splice(selectedIndex,1);
   selectedIndex=-1;
-  renderList(); drawChart(); updateKPIs();
+  refreshUI();
+  status(L[lang].SAVED);
 }
 
 /* ===== Lista/KPI/Diagram ===== */
@@ -312,21 +332,21 @@ function renderList(){
       `<div class="cell cycle"><span class="badge">#${i+1}</span></div>
        <div class="cell time"><b>${formatMs(l.ms)}</b></div>
        <div class="cell problems">
-         <textarea data-ix="${i}" placeholder=""></textarea>
+         <textarea data-ix="${i}" placeholder="${L[lang].PROBLEMS}"></textarea>
        </div>
        <div class="delete-cell"><button class="delete-btn" title="Delete" data-ix="${i}">🗑️</button></div>`;
     list.appendChild(row);
     const ta=row.querySelector('textarea'); ta.value=l.note||'';
     row.addEventListener('click', ()=> selectRow(i));
     ta.addEventListener('focus', ()=> selectRow(i));
-    ta.addEventListener('input', e=>{ const ix=+e.target.dataset.ix; laps[ix].note=e.target.value; });
+    ta.addEventListener('input', e=>{ const ix=+e.target.dataset.ix; laps[ix].note=e.target.value; saveState(); });
   });
   list.querySelectorAll('.delete-btn').forEach(btn=>btn.addEventListener('click',e=>{
     e.stopPropagation();
     const ix=+e.currentTarget.dataset.ix;
     laps.splice(ix,1);
     if(selectedIndex===ix) selectedIndex=-1; else if(selectedIndex>ix) selectedIndex--;
-    renderList(); drawChart(); updateKPIs();
+    refreshUI();
   }));
 }
 function avgMs(a){return a.length? a.reduce((x,y)=>x+y,0)/a.length:0}
@@ -340,31 +360,207 @@ function updateKPIs(){
 
 /* ===== Diagram (blå nyanser på staplarna) ===== */
 function drawChart(){
-  const dpr=window.devicePixelRatio||1, W=chart.clientWidth*dpr, H=chart.clientHeight*dpr;
+  const dpr=window.devicePixelRatio||1;
+  const clientW=Math.max(1,chart.clientWidth), clientH=Math.max(1,chart.clientHeight);
+  const W=clientW*dpr, H=clientH*dpr;
   chart.width=W; chart.height=H; ctx.clearRect(0,0,W,H);
-  const padL=64*dpr, padR=16*dpr, padT=14*dpr, padB=34*dpr, innerW=W-padL-padR, innerH=H-padT-padB;
-  const maxMs=Math.max(10000,...laps.map(l=>l.ms));
-  const maxS=Math.ceil(maxMs/10000)*10;
+  const padL=64*dpr, padR=18*dpr, padT=16*dpr, padB=42*dpr, innerW=W-padL-padR, innerH=H-padT-padB;
+  if(innerW<=0 || innerH<=0) return;
+  const maxMs=laps.length?Math.max(...laps.map(l=>l.ms),10000):10000;
+  const maxS=Math.max(10,Math.ceil(maxMs/1000/10)*10);
   const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
 
-  // ram
+  const styles=getComputedStyle(document.documentElement);
+  const ink=(styles.getPropertyValue('--ink')||'#1f2937').trim()||'#1f2937';
+  const muted=(styles.getPropertyValue('--muted')||'#475569').trim()||'#475569';
+
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1*dpr; ctx.strokeRect(padL,padT,innerW,innerH);
 
-  // grid / Y-etiketter var 30s
-  ctx.fillStyle='#475569'; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+  ctx.fillStyle=muted; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+  ctx.textBaseline='middle';
   for(let s=0;s<=maxS;s+=30){
     const y=msToY(s*1000);
     ctx.strokeStyle=s===0?'#cbd5e1':'#e5e7eb';
     ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
     const m=Math.floor(s/60), sec=s%60;
-    ctx.textAlign='left'; ctx.textBaseline='middle';
     ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y);
   }
 
-  // staplar – blå palett (nyanser)
+  ctx.save();
+  ctx.fillStyle=ink;
+  ctx.font=`${12*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.translate(padL/2, padT+innerH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(L[lang].AXIS_LABEL,0,0);
+  ctx.restore();
+
   const n=laps.length;
   if(n){
-    const gap=6*dpr, bw=Math.max(8*dpr,(innerW-gap*(n-1))/n);
+    const gap=6*dpr, bw=Math.max(10*dpr,(innerW-gap*(n-1))/n);
+    const palette=['#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb'];
     for(let i=0;i<n;i++){
       const l=laps[i];
-      const x=padL+i*(bw+gap), y=msToY(l*
+      const x=padL+i*(bw+gap);
+      const y=msToY(l.ms);
+      const h=msToY(0)-y;
+      ctx.fillStyle=palette[i%palette.length];
+      ctx.fillRect(x,y,bw,h);
+      ctx.fillStyle=ink; ctx.font=`${10*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText(`#${i+1}`,x+bw/2,H-padB+6*dpr);
+    }
+
+    const arr=laps.map(l=>l.ms);
+    const avg=avgMs(arr);
+    if(arr.length){
+      const yAvg=msToY(avg);
+      ctx.setLineDash([6*dpr,4*dpr]);
+      ctx.strokeStyle='#f97316'; ctx.lineWidth=1.5*dpr;
+      ctx.beginPath(); ctx.moveTo(padL,yAvg); ctx.lineTo(W-padR,yAvg); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='#f97316'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+      const avgText=`${L[lang].KPI_AVG_SHORT} ${formatMs(Math.round(avg))}`;
+      ctx.fillText(avgText,W-4*dpr,yAvg-4*dpr);
+    }
+    const br=brctMs(arr);
+    if(br!==null){
+      const yBr=msToY(br);
+      ctx.setLineDash([4*dpr,3*dpr]);
+      ctx.strokeStyle='#16a34a'; ctx.lineWidth=1.5*dpr;
+      ctx.beginPath(); ctx.moveTo(padL,yBr); ctx.lineTo(W-padR,yBr); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='#16a34a'; ctx.textAlign='right'; ctx.textBaseline='top';
+      const brText=`${L[lang].KPI_BRCT_SHORT} ${formatMs(Math.round(br))}`;
+      ctx.fillText(brText,W-4*dpr,yBr+4*dpr);
+    }
+  }
+}
+
+function refreshUI({save=true}={}){
+  renderList();
+  drawChart();
+  updateKPIs();
+  if(save) saveState();
+}
+
+function saveState(){
+  try{
+    const payload={
+      lang,
+      theme,
+      laps:laps.map(l=>({ms:l.ms,note:l.note||''})),
+      process:processInput.value||'',
+      date:dateInput.value||''
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }catch(err){
+    console.warn('Failed to save state', err);
+  }
+}
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const stored=JSON.parse(raw);
+    if(stored && typeof stored==='object'){
+      if(stored.lang && L[stored.lang]) lang=stored.lang;
+      if(stored.theme) theme=stored.theme;
+      if(Array.isArray(stored.laps)){
+        laps=stored.laps
+          .map(item=>({ms:Number(item.ms)||0,note:item.note||''}))
+          .filter(item=>item.ms>0);
+      }
+      if(typeof stored.process==='string') processInput.value=stored.process;
+      if(typeof stored.date==='string') dateInput.value=stored.date;
+    }
+  }catch(err){
+    console.warn('Failed to load state', err);
+  }
+}
+
+function resetApp(){
+  if(!confirm(L[lang].CONFIRM_RESET)) return;
+  if(running) stopTimer(); else { timerDisp.textContent='00:00.00'; }
+  laps=[];
+  selectedIndex=-1;
+  processInput.value='';
+  dateInput.value='';
+  refreshUI();
+  status(L[lang].RESETTED);
+}
+
+function exportCSV(){
+  const rows=[];
+  rows.push(['Process', processInput.value||'']);
+  rows.push(['Date', dateInput.value||'']);
+  rows.push([]);
+  rows.push([L[lang].CYCLE,'ms',L[lang].TIMES,L[lang].PROBLEMS]);
+  laps.forEach((lap,i)=>{
+    rows.push([
+      `#${i+1}`,
+      lap.ms,
+      formatSecondsForCSV(lap.ms),
+      (lap.note||'').replace(/\n/g,' ')
+    ]);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const stamp=new Date().toISOString().slice(0,10);
+  a.download=`20-cycle-check-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  status(L[lang].SAVED);
+}
+
+function setLanguage(newLang){
+  if(!L[newLang]) return;
+  lang=newLang;
+  setLangTexts();
+  refreshUI();
+}
+
+function cycleTheme(){
+  theme=theme==='auto'?'light':theme==='light'?'dark':'auto';
+  applyTheme(theme);
+  saveState();
+}
+
+function initEventHandlers(){
+  document.querySelectorAll('#langbar .flagbtn').forEach(btn=>{
+    btn.addEventListener('click',()=>{ setLanguage(btn.dataset.lang); });
+  });
+  $('#btnTheme').addEventListener('click',cycleTheme);
+  $('#btnReset').addEventListener('click',resetApp);
+  $('#btnExport').addEventListener('click',exportCSV);
+  processInput.addEventListener('input',()=>saveState());
+  dateInput.addEventListener('input',()=>saveState());
+  window.addEventListener('resize',()=>drawChart());
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const mediaHandler=()=>{ if(theme==='auto') applyTheme('auto'); };
+  if(media.addEventListener) media.addEventListener('change',mediaHandler);
+  else if(media.addListener) media.addListener(mediaHandler);
+}
+
+function init(){
+  loadState();
+  applyTheme(theme);
+  setLangTexts();
+  refreshUI({save:false});
+  stopBtn.disabled=true;
+  timerDisp.textContent='00:00.00';
+  status(L[lang].READY);
+  initEventHandlers();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
