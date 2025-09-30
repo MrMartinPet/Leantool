@@ -10,14 +10,14 @@
   :root{
     --bg:#f7f7f9; --paper:#ffffff; --ink:#0f172a; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb;
     --radius:10px; --tap:40px; --fs:clamp(13px,2.2vw,15px); --fs-sm:clamp(11px,1.9vw,13px);
-    --blue:#2563eb; --blue-600:#2563eb; --blue-500:#3b82f6; --blue-400:#60a5fa; --blue-300:#93c5fd;
+    --blue-600:#2563eb; --blue-500:#3b82f6; --blue-400:#60a5fa; --blue-300:#93c5fd;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;font-size:var(--fs);background:var(--bg);color:var(--ink)}
   .app{min-height:100%;padding:8px}
 
-  /* Menyrad (kompakt, wrappar vid behov) */
+  /* Menyrad – allt får plats även i mobil */
   .menubar{
     display:flex;flex-wrap:wrap;align-items:center;gap:8px;
     background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
@@ -25,38 +25,49 @@
   }
   .logo{font-weight:800;font-size:16px;white-space:nowrap;margin-right:auto}
   .menu-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-  .langbar{display:flex;gap:6px;align-items:center}
-  .flagbtn{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm);cursor:pointer}
-  .flagbtn.active{background:#eef2ff;border-color:#c7d2fe}
+  .langbtn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm);cursor:pointer
+  }
   .flag{font-size:16px;line-height:1}
 
-  /* Layout */
-  .row-top{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
-  .process-grid{display:grid;grid-template-columns:1fr 160px;gap:8px}
-  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
-  .pad{padding:8px}
-  .toolbar{display:flex;gap:6px;flex-wrap:wrap}
-  label{font-size:var(--fs-sm);color:var(--muted)}
-  input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
-  .btn.primary{background:var(--blue);color:#fff;border-color:#1d4ed8}
+  .btn.primary{background:var(--blue-600);color:#fff;border-color:#1d4ed8}
   .btn.secondary{background:#fff;border-color:var(--line)}
   .btn.danger{background:#fee2e2;border-color:#fecaca}
   .btn.small{min-height:34px;padding:6px 10px;font-size:var(--fs-sm)}
-  .status{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:var(--fs-sm)}
-  .timer{font-weight:800;font-size:16px;background:#0a0;color:#fff;padding:6px 10px;border-radius:8px;text-align:center;white-space:nowrap}
 
-  .wrap{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px}
+  /* Korten högst upp: Språk + Process/Date, samt Start/Timer/Stop */
+  .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
+  .pad{padding:8px}
+  label{font-size:var(--fs-sm);color:var(--muted)}
+  input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+
+  .lang-card .row1{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .lang-card .row2{display:grid;grid-template-columns:1fr 160px;gap:8px;margin-top:8px}
+  .timer-card .controls{display:flex;gap:8px;align-items:center}
+  .timer-card .start{flex:0 0 35%}
+  .timer-card .mid{flex:0 0 50%;display:flex;justify-content:center}
+  .timer-card .stop{flex:0 0 15%}
+  .timer{font-weight:800;font-size:18px;background:#0a0;color:#fff;padding:10px 12px;border-radius:8px;text-align:center;min-width:120px}
+
+  /* Resultat + diagram */
+  .wrap{display:grid;grid-template-columns:1.2fr 0.8fr;gap:8px;margin-top:8px}
+  .chart-card{display:flex;flex-direction:column}
+  .chart-header{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .chart-title{margin:0;font-size:18px;font-weight:700;color:var(--ink)}
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+  .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
   .chart-wrap{padding:6px}
   canvas{width:100%;height:360px;display:block}
 
-  /* Lista – tydligare rader */
+  /* Lista */
   .list-head,.list-row{display:grid;grid-template-columns:56px 110px 1fr 40px;gap:8px;align-items:center}
   .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px;font-weight:700;z-index:1}
   .list{max-height:460px;overflow:auto;border-top:1px solid var(--line);padding:8px}
   .list-row{
-    padding:10px; background:#fff; border:1px solid var(--line); border-radius:10px;
-    margin-bottom:8px; box-shadow:0 1px 2px rgba(0,0,0,.04);
+    padding:10px;background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);
   }
   .list-row:nth-child(odd){background:#f9fbff}
   .list-row.selected{outline:2px solid #93c5fd;background:#eff6ff}
@@ -65,15 +76,13 @@
   .delete-btn{cursor:pointer;border:none;background:none;font-size:18px;line-height:1;color:#dc2626}
   .delete-btn:hover{color:#b91c1c}
 
-  .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
-  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-
   @media (max-width:980px){
     .wrap{grid-template-columns:1fr}
     canvas{height:300px}
-    .row-top{grid-template-columns:1fr}
+    .top-grid{grid-template-columns:1fr}
   }
   @media (max-width:640px){
+    .kpis{grid-template-columns:1fr}
     .list-head{display:none}
     .list{max-height:none;padding:8px}
     .list-row{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:
@@ -84,32 +93,31 @@
     .list-row .time{grid-area:time}
     .list-row .problems{grid-area:problems}
     .list-row .delete-cell{grid-area:delete;text-align:right}
-    .btn.small{padding:6px 8px}
-    .flagbtn{padding:4px 8px}
+    .timer-card .controls{gap:6px}
   }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- Menyrad (kompakt, wrappar) -->
+  <!-- Menyrad -->
   <div class="menubar">
     <div class="logo">20 Cycle Check</div>
     <div class="menu-actions">
-      <div class="langbar" id="langbar">
-        <button class="flagbtn active" data-lang="sv"><span class="flag">🇸🇪</span>SV</button>
-        <button class="flagbtn" data-lang="en"><span class="flag">🇬🇧</span>EN</button>
-      </div>
-      <button id="btnTheme" class="btn small">Tema: Auto</button>
-      <button id="btnExport" class="btn small">Export to Excel (CSV)</button>
+      <button id="btnLang" class="langbtn"><span class="flag">🇸🇪</span><span id="langLabel">SV</span></button>
+      <button id="btnExport" class="btn small">Exportera</button>
       <button id="btnReset" class="btn small danger">Nollställ</button>
     </div>
   </div>
 
-  <!-- Inputs + timer + Start/Varv + Stopp -->
-  <div class="row-top">
-    <div class="card pad">
-      <div class="process-grid">
+  <!-- Språk + Process/Datum  |  Start/Timer/Stop -->
+  <div class="top-grid">
+    <div class="card pad lang-card">
+      <div class="row1">
+        <!-- samma språkknapp visas även här om du vill; vi behåller endast i menyraden för plats -->
+        <label id="lblInfo" style="color:var(--muted);font-size:var(--fs-sm)"></label>
+      </div>
+      <div class="row2">
         <div>
           <label id="lblProcess">PROCESS</label>
           <input id="process" type="text" placeholder="Ange processnamn…">
@@ -119,26 +127,29 @@
           <input id="date" type="text" placeholder="yyyy-mm-dd">
         </div>
       </div>
-      <div style="margin-top:6px" class="toolbar">
-        <button id="btnToggle" class="btn primary">Start</button>
-        <button id="btnStop" class="btn secondary" disabled>Stoppa</button>
-        <div id="status" class="status">Status: redo.</div>
-      </div>
     </div>
 
-    <div class="card pad card-meta">
-      <div class="timer" id="timerDisp">00:00.00</div>
+    <div class="card pad timer-card">
+      <div class="controls">
+        <div class="start"><button id="btnToggle" class="btn primary" style="width:100%;font-size:16px;padding:12px 14px">Start</button></div>
+        <div class="mid"><div class="timer" id="timerDisp">00:00.00</div></div>
+        <div class="stop"><button id="btnStop" class="btn secondary" style="width:100%">Stoppa</button></div>
+      </div>
     </div>
   </div>
 
-  <!-- Diagram + lista -->
+  <!-- Diagram + KPI + Lista -->
   <div class="wrap">
-    <div class="card">
+    <div class="card chart-card">
+      <div class="chart-header pad">
+        <h3 id="resultsTitle" class="chart-title">Resultat</h3>
+        <div class="kpis">
+          <div class="pill"><span id="kpiAvgLabel"></span> <b id="kpiAvg">00:00.00</b></div>
+          <div class="pill"><span id="kpiBrctLabel"></span> <b id="kpiBrct">–</b></div>
+        </div>
+      </div>
       <div class="chart-wrap">
         <canvas id="chart" height="360"></canvas>
-      </div>
-      <div style="padding:6px 8px;color:#334155;background:#f8fafc;border-top:1px solid #e5e7eb;border-bottom-left-radius:10px;border-bottom-right-radius:10px;font-size:var(--fs-sm)">
-        <span id="help1"></span>
       </div>
     </div>
 
@@ -150,14 +161,6 @@
         <div> </div>
       </div>
       <div id="list" class="list"></div>
-
-      <div style="padding:8px">
-        <div class="kpis">
-          <div class="pill"><span id="kpiAvgLabel"></span> <b id="kpiAvg">00:00.00</b></div>
-          <div class="pill"><span id="kpiBrctLabel"></span> <b id="kpiBrct">–</b></div>
-          <div class="pill"><span id="kpiDLabel"></span> <b id="kpiD">0.0%</b></div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -165,42 +168,19 @@
 <script>
 /* ===== i18n ===== */
 const L={
-  sv:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Ange processnamn…",PH_DATE:"yyyy-mm-dd",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Varv",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Exportera till Excel (CSV)",THEME_AUTO:"Tema: Auto",THEME_LIGHT:"Tema: Ljust",THEME_DARK:"Tema: Mörkt",
-      STATUS_PREFIX:"Status: ",READY:"redo.",MEASURE:"Mäter…",SAVED:"Sparad.",STOPPED:"Stoppad.",RESETTED:"Återställd.",
-      CONFIRM_RESET:"Är du säker på att du vill nollställa hela mätningen?",
-      HELP:"Y-axel auto efter längsta cykel. Staplar = cykler. Orange = Ø CT. Grön = BRCT (5 snabbaste). Tips: 🗑️ = radera rad.",
-      CYCLE:"CYCLE",TIMES:"TIME(S)",PROBLEMS:"OBSERVED PROBLEMS",
-      KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",KPI_D:"D %:",CSV_DECIMAL:","},
-  en:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Lap",STOP:"Stop",RESET:"Reset",EXPORT:"Export to Excel (CSV)",THEME_AUTO:"Theme: Auto",THEME_LIGHT:"Theme: Light",THEME_DARK:"Theme: Dark",
-      STATUS_PREFIX:"Status: ",READY:"ready.",MEASURE:"Measuring…",SAVED:"Saved.",STOPPED:"Stopped.",RESETTED:"Reset.",
-      CONFIRM_RESET:"Are you sure you want to reset the entire measurement?",
-      HELP:"Y-axis auto to longest cycle. Bars = cycles. Orange = Ø CT. Green = BRCT (5 fastest). Tip: 🗑️ = delete row.",
-      CYCLE:"CYCLE",TIMES:"TIME(S)",PROBLEMS:"OBSERVED PROBLEMS",
-      KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",KPI_D:"D %:",CSV_DECIMAL:"."}
+  sv:{INFO:"Språk: Svenska (tryck för att växla)",PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Ange processnamn…",PH_DATE:"yyyy-mm-dd",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Varv",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Exportera",
+      RESULTS_TITLE:"Resultat",AXIS_LABEL:"Tid (mm:ss)",
+      KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",
+      KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:","},
+  en:{INFO:"Language: English (tap to toggle)",PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Lap",STOP:"Stop",RESET:"Reset",EXPORT:"Export",
+      RESULTS_TITLE:"Results",AXIS_LABEL:"Time (mm:ss)",
+      KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",
+      KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:"."}
 };
 let lang='sv';
 const $=s=>document.querySelector(s);
-
-/* ===== Theme ===== */
-let theme='auto';
-function applyTheme(mode){
-  if(mode==='dark'){
-    document.documentElement.style.setProperty('--bg','#0b1220');
-    document.documentElement.style.setProperty('--paper','#0f172a');
-    document.documentElement.style.setProperty('--ink','#e5e7eb');
-    document.documentElement.style.setProperty('--line','#1f2937');
-  }else if(mode==='light'){
-    document.documentElement.style.setProperty('--bg','#f7f7f9');
-    document.documentElement.style.setProperty('--paper','#ffffff');
-    document.documentElement.style.setProperty('--ink','#0f172a');
-    document.documentElement.style.setProperty('--line','#e5e7eb');
-  }else{
-    applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); return;
-  }
-  $('#btnTheme').textContent=theme==='auto'?L[lang].THEME_AUTO:(theme==='light'?L[lang].THEME_LIGHT:L[lang].THEME_DARK);
-}
 
 /* ===== Helpers ===== */
 function pad(n,w=2){return String(n).padStart(w,'0')}
@@ -211,35 +191,34 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[]; // {ms,note}
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
-const STORAGE_KEY='cycle-check-state-v1';
+const STORAGE_KEY='cycle-check-state-v2';
 
 /* ===== UI refs ===== */
 const processInput=$('#process'), dateInput=$('#date');
-const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp'), statusEl=$('#status');
+const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp');
 const chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
-
-/* ===== Status ===== */
-function status(s){ statusEl.textContent = L[lang].STATUS_PREFIX + s; }
 
 /* ===== i18n apply ===== */
 function setLangTexts(){
+  $('#lblInfo').textContent=L[lang].INFO;
   $('#lblProcess').textContent=L[lang].PROCESS;
   $('#lblDate').textContent=L[lang].DATE;
   $('#process').placeholder=L[lang].PH_PROCESS;
   $('#date').placeholder=L[lang].PH_DATE;
   $('#btnExport').textContent=L[lang].EXPORT;
   $('#btnReset').textContent=L[lang].RESET;
-  $('#help1').textContent=L[lang].HELP;
-  $('#thCycle').textContent=L[lang].CYCLE;
-  $('#thTime').textContent=L[lang].TIMES;
-  $('#thProblems').textContent=L[lang].PROBLEMS;
+  $('#resultsTitle').textContent=L[lang].RESULTS_TITLE;
+  $('#kpiAvgLabel').textContent=L[lang].KPI_AVG;
+  $('#kpiBrctLabel').textContent=L[lang].KPI_BRCT;
   toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
   stopBtn.textContent = L[lang].STOP;
-  document.querySelectorAll('#langbar .flagbtn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
+  // topp-knapp etikett + flagga
+  $('#langLabel').textContent = lang==='sv'?'SV':'EN';
+  $('#btnLang').querySelector('.flag').textContent = lang==='sv'?'🇸🇪':'🇬🇧';
   renderList();
 }
 
-/* ===== Timer (Start / Lap / Stop) ===== */
+/* ===== Timer ===== */
 function startTimer(){
   if(running) return;
   running=true;
@@ -248,7 +227,6 @@ function startTimer(){
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
   toggleBtn.textContent=L[lang].TOGGLE_LAP;
   stopBtn.disabled=false;
-  status(L[lang].MEASURE);
 }
 function addLap(ms,note=''){
   laps.push({ms,note});
@@ -258,7 +236,6 @@ function lap(){
   if(!running) return;
   const elapsed=Math.max(10, performance.now()-tStart);
   addLap(elapsed);
-  status(L[lang].SAVED);
   tStart=performance.now();
   timerDisp.textContent='00:00.00';
 }
@@ -267,12 +244,10 @@ function stopTimer(){
     clearInterval(tick); tick=null; running=false;
     stopBtn.disabled=true;
     toggleBtn.textContent=L[lang].TOGGLE_START;
-    status(L[lang].STOPPED);
   }
   timerDisp.textContent='00:00.00';
 }
 function toggle(){ running ? lap() : startTimer(); }
-
 toggleBtn.addEventListener('click', toggle);
 stopBtn.addEventListener('click', stopTimer);
 
@@ -306,7 +281,6 @@ function deleteSelected(){
   laps.splice(selectedIndex,1);
   selectedIndex=-1;
   refreshUI();
-  status(L[lang].SAVED);
 }
 
 /* ===== Lista/KPI/Diagram ===== */
@@ -319,7 +293,7 @@ function renderList(){
       `<div class="cell cycle"><span class="badge">#${i+1}</span></div>
        <div class="cell time"><b>${formatMs(l.ms)}</b></div>
        <div class="cell problems">
-         <textarea data-ix="${i}" placeholder="${L[lang].PROBLEMS}"></textarea>
+         <textarea data-ix="${i}" placeholder="Notes / Problem"></textarea>
        </div>
        <div class="delete-cell"><button class="delete-btn" title="Delete" data-ix="${i}">🗑️</button></div>`;
     list.appendChild(row);
@@ -336,29 +310,35 @@ function renderList(){
     refreshUI();
   }));
 }
+
 function avgMs(a){return a.length? a.reduce((x,y)=>x+y,0)/a.length:0}
 function brctMs(a){ if(a.length<5) return null; return avgMs([...a].sort((x,y)=>x-y).slice(0,5)); }
 function updateKPIs(){
   const arr=laps.map(x=>x.ms), avg=avgMs(arr), br=brctMs(arr);
   $('#kpiAvg').textContent=arr.length?formatMs(Math.round(avg)):'00:00.00';
   $('#kpiBrct').textContent=br!==null?formatMs(Math.round(br)):'–';
-  const D=(avg>0&&br!==null)?((avg-br)/avg*100):0; $('#kpiD').textContent=`${D.toFixed(1)}%`;
 }
 
-/* ===== Diagram (blå nyanser på staplarna) ===== */
+/* ===== Diagram med vänster tidsaxel och linjeetiketter ===== */
 function drawChart(){
   const dpr=window.devicePixelRatio||1;
-  const clientW=Math.max(1,chart.clientWidth), clientH=Math.max(1,chart.clientHeight);
+  const c=document.getElementById('chart');
+  const clientW=Math.max(1,c.clientWidth), clientH=Math.max(1,c.clientHeight);
   const W=clientW*dpr, H=clientH*dpr;
-  chart.width=W; chart.height=H; ctx.clearRect(0,0,W,H);
+  c.width=W; c.height=H;
   const padL=64*dpr, padR=18*dpr, padT=16*dpr, padB=42*dpr, innerW=W-padL-padR, innerH=H-padT-padB;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,W,H);
   if(innerW<=0 || innerH<=0) return;
+
   const maxMs=laps.length?Math.max(...laps.map(l=>l.ms),10000):10000;
   const maxS=Math.max(10,Math.ceil(maxMs/1000/10)*10);
   const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
 
+  // ram
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1*dpr; ctx.strokeRect(padL,padT,innerW,innerH);
 
+  // vänster tidsaxel + grid
   ctx.fillStyle='#475569'; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
   ctx.textBaseline='middle';
   for(let s=0;s<=maxS;s+=30){
@@ -368,7 +348,18 @@ function drawChart(){
     const m=Math.floor(s/60), sec=s%60;
     ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y);
   }
+  // Y-axelrubrik
+  ctx.save();
+  ctx.fillStyle='#0f172a';
+  ctx.font=`${12*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.translate(padL/2, padT+innerH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(L[lang].AXIS_LABEL,0,0);
+  ctx.restore();
 
+  // staplar
   const n=laps.length;
   if(n){
     const gap=6*dpr, bw=Math.max(10*dpr,(innerW-gap*(n-1))/n);
@@ -385,26 +376,29 @@ function drawChart(){
       ctx.fillText(`#${i+1}`,x+bw/2,H-padB+6*dpr);
     }
 
+    // Ø CT & BRCT linjer + etiketter med värde
     const arr=laps.map(l=>l.ms);
     const avg=avgMs(arr);
     if(arr.length){
       const yAvg=msToY(avg);
+      const avgText=`${L[lang].KPI_AVG_SHORT} ${formatMs(Math.round(avg))}`;
       ctx.setLineDash([6*dpr,4*dpr]);
       ctx.strokeStyle='#f97316'; ctx.lineWidth=1.5*dpr;
       ctx.beginPath(); ctx.moveTo(padL,yAvg); ctx.lineTo(W-padR,yAvg); ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle='#f97316'; ctx.textAlign='right'; ctx.textBaseline='bottom';
-      ctx.fillText('Ø CT',W-4*dpr,yAvg-4*dpr);
+      ctx.fillText(avgText,W-4*dpr,yAvg-4*dpr);
     }
     const br=brctMs(arr);
     if(br!==null){
       const yBr=msToY(br);
+      const brText=`${L[lang].KPI_BRCT_SHORT} ${formatMs(Math.round(br))}`;
       ctx.setLineDash([4*dpr,3*dpr]);
       ctx.strokeStyle='#16a34a'; ctx.lineWidth=1.5*dpr;
       ctx.beginPath(); ctx.moveTo(padL,yBr); ctx.lineTo(W-padR,yBr); ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle='#16a34a'; ctx.textAlign='right'; ctx.textBaseline='top';
-      ctx.fillText('BRCT',W-4*dpr,yBr+4*dpr);
+      ctx.fillText(brText,W-4*dpr,yBr+4*dpr);
     }
   }
 }
@@ -416,21 +410,18 @@ function refreshUI({save=true}={}){
   if(save) saveState();
 }
 
+/* ===== Persistens ===== */
 function saveState(){
   try{
     const payload={
       lang,
-      theme,
       laps:laps.map(l=>({ms:l.ms,note:l.note||''})),
       process:processInput.value||'',
       date:dateInput.value||''
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }catch(err){
-    console.warn('Failed to save state', err);
-  }
+  }catch(err){ console.warn('Failed to save state', err); }
 }
-
 function loadState(){
   try{
     const raw=localStorage.getItem(STORAGE_KEY);
@@ -438,99 +429,62 @@ function loadState(){
     const stored=JSON.parse(raw);
     if(stored && typeof stored==='object'){
       if(stored.lang && L[stored.lang]) lang=stored.lang;
-      if(stored.theme) theme=stored.theme;
       if(Array.isArray(stored.laps)){
-        laps=stored.laps
-          .map(item=>({ms:Number(item.ms)||0,note:item.note||''}))
-          .filter(item=>item.ms>0);
+        laps=stored.laps.map(item=>({ms:Number(item.ms)||0,note:item.note||''})).filter(item=>item.ms>0);
       }
       if(typeof stored.process==='string') processInput.value=stored.process;
       if(typeof stored.date==='string') dateInput.value=stored.date;
     }
-  }catch(err){
-    console.warn('Failed to load state', err);
-  }
+  }catch(err){ console.warn('Failed to load state', err); }
 }
 
-function resetApp(){
-  if(!confirm(L[lang].CONFIRM_RESET)) return;
-  if(running) stopTimer(); else { timerDisp.textContent='00:00.00'; }
-  laps=[];
-  selectedIndex=-1;
-  processInput.value='';
-  dateInput.value='';
+/* ===== Språkväxling (en enda knapp) ===== */
+function toggleLanguage(){
+  lang = (lang==='sv') ? 'en' : 'sv';
+  setLangTexts();
   refreshUI();
-  status(L[lang].RESETTED);
 }
 
+/* ===== Export & Reset ===== */
 function exportCSV(){
   const rows=[];
   rows.push(['Process', processInput.value||'']);
   rows.push(['Date', dateInput.value||'']);
   rows.push([]);
-  rows.push([L[lang].CYCLE,'ms',L[lang].TIMES,L[lang].PROBLEMS]);
+  rows.push(['Cycle','ms','sec','Notes']);
   laps.forEach((lap,i)=>{
-    rows.push([
-      `#${i+1}`,
-      lap.ms,
-      formatSecondsForCSV(lap.ms),
-      (lap.note||'').replace(/\n/g,' ')
-    ]);
+    rows.push([`#${i+1}`, lap.ms, formatSecondsForCSV(lap.ms), (lap.note||'').replace(/\n/g,' ')]);
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;
-  const stamp=new Date().toISOString().slice(0,10);
-  a.download=`20-cycle-check-${stamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  status(L[lang].SAVED);
+  a.href=url; a.download=`20-cycle-check-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
-
-function setLanguage(newLang){
-  if(!L[newLang]) return;
-  lang=newLang;
-  setLangTexts();
+function resetApp(){
+  if(!confirm(lang==='sv'?'Är du säker på att du vill nollställa?':'Are you sure you want to reset?')) return;
+  if(running){ stopTimer(); }
+  laps=[]; selectedIndex=-1; processInput.value=''; dateInput.value='';
   refreshUI();
 }
 
-function cycleTheme(){
-  theme=theme==='auto'?'light':theme==='light'?'dark':'auto';
-  applyTheme(theme);
-  saveState();
-}
-
-function initEventHandlers(){
-  document.querySelectorAll('#langbar .flagbtn').forEach(btn=>{
-    btn.addEventListener('click',()=>{ setLanguage(btn.dataset.lang); });
-  });
-  $('#btnTheme').addEventListener('click',cycleTheme);
-  $('#btnReset').addEventListener('click',resetApp);
-  $('#btnExport').addEventListener('click',exportCSV);
-  processInput.addEventListener('input',()=>saveState());
-  dateInput.addEventListener('input',()=>saveState());
-  window.addEventListener('resize',()=>drawChart());
-  const media=window.matchMedia('(prefers-color-scheme: dark)');
-  const mediaHandler=()=>{ if(theme==='auto') applyTheme('auto'); };
-  if(media.addEventListener) media.addEventListener('change',mediaHandler);
-  else if(media.addListener) media.addListener(mediaHandler);
-}
-
+/* ===== Init ===== */
 function init(){
   loadState();
-  applyTheme(theme);
   setLangTexts();
   refreshUI({save:false});
   stopBtn.disabled=true;
   timerDisp.textContent='00:00.00';
-  status(L[lang].READY);
-  initEventHandlers();
-}
 
+  // handlers
+  document.getElementById('btnLang').addEventListener('click', toggleLanguage);
+  document.getElementById('btnExport').addEventListener('click', exportCSV);
+  document.getElementById('btnReset').addEventListener('click', resetApp);
+  processInput.addEventListener('input', saveState);
+  dateInput.addEventListener('input', saveState);
+  window.addEventListener('resize', drawChart);
+}
 document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
