@@ -36,7 +36,7 @@
   .btn.danger{background:#fee2e2;border-color:#fecaca}
   .btn.small{min-height:34px;padding:6px 10px;font-size:var(--fs-sm)}
 
-  /* Övre grid: Språk/Process/Datum + Start/Timer/Stop */
+  /* Övre grid: Process/Datum + Start/Timer/Stop */
   .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
   .pad{padding:8px}
@@ -45,7 +45,7 @@
 
   .lang-card .row2{display:grid;grid-template-columns:1fr 160px;gap:8px}
   .timer-card .controls{display:flex;gap:8px;align-items:center}
-  .timer-card .controls > *{min-width:0} /* förhindrar overflow */
+  .timer-card .controls > *{min-width:0}
   .timer-card .start{flex:0 0 35%}
   .timer-card .mid{flex:0 0 50%;display:flex;justify-content:center}
   .timer-card .stop{flex:0 0 15%}
@@ -109,7 +109,7 @@
     </div>
   </div>
 
-  <!-- Språk/Process/Datum  |  Start/Timer/Stop -->
+  <!-- Process/Datum  |  Start/Timer/Stop -->
   <div class="top-grid">
     <div class="card pad lang-card">
       <div class="row2">
@@ -186,12 +186,10 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[]; // {ms,note}
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
-const STORAGE_KEY='cycle-check-state-v3';
+const STORAGE_KEY='cycle-check-state-v4';
 
-/* Animation state for bars */
-let animTargets=[];   // target heights in ms
-let animProgress=[];  // 0..1 per bar
-let animRunning=false;
+/* Live-teckning */
+let rafId=null;
 
 /* ===== UI refs ===== */
 const processInput=$('#process'), dateInput=$('#date');
@@ -216,23 +214,21 @@ function setLangTexts(){
   renderList();
 }
 
-/* ===== Timer ===== */
+/* ===== Timer (live-barlinje) ===== */
 function startTimer(){
   if(running) return;
   running=true;
   tStart=performance.now();
   timerDisp.textContent='00:00.00';
+  if(tick) clearInterval(tick);
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
   toggleBtn.textContent=L[lang].TOGGLE_LAP;
   stopBtn.disabled=false;
+  startLoop();
 }
 function addLap(ms,note=''){
   laps.push({ms,note});
-  // setup animation for the new bar
-  animTargets = laps.map(l=>l.ms);
-  animProgress = laps.map((_,i)=> i===laps.length-1 ? 0 : 1); // new bar animates, old bars already at 1
-  animateBars();
-  refreshUI({save:true,skipDraw:true}); // draw handled by animation
+  refreshUI();
 }
 function lap(){
   if(!running) return;
@@ -243,11 +239,14 @@ function lap(){
 }
 function stopTimer(){
   if(running){
-    clearInterval(tick); tick=null; running=false;
-    stopBtn.disabled=true;
+    running=false;
+    if(tick){ clearInterval(tick); tick=null; }
     toggleBtn.textContent=L[lang].TOGGLE_START;
   }
+  stopBtn.disabled=true;
   timerDisp.textContent='00:00.00';
+  stopLoop();
+  refreshUI(); // slutlig ritning utan aktiv stapel
 }
 function toggle(){ running ? lap() : startTimer(); }
 toggleBtn.addEventListener('click', toggle);
@@ -282,8 +281,6 @@ function deleteSelected(){
   if(selectedIndex<0 || selectedIndex>=laps.length) return;
   laps.splice(selectedIndex,1);
   selectedIndex=-1;
-  animTargets = laps.map(l=>l.ms);
-  animProgress = laps.map(()=>1);
   refreshUI();
 }
 
@@ -311,8 +308,6 @@ function renderList(){
     const ix=+e.currentTarget.dataset.ix;
     laps.splice(ix,1);
     if(selectedIndex===ix) selectedIndex=-1; else if(selectedIndex>ix) selectedIndex--;
-    animTargets = laps.map(l=>l.ms);
-    animProgress = laps.map(()=>1);
     refreshUI();
   }));
 }
@@ -325,48 +320,57 @@ function updateKPIs(){
   $('#kpiBrct').textContent=br!==null?formatMs(Math.round(br)):'–';
 }
 
-/* ===== Diagram (vänster tidsaxel, alla staplar får plats, animation) ===== */
-function drawChart(progressOverride=null){
+/* ===== Diagram – live aktiv stapel, inga 00:00-etiketter i mobil ===== */
+function drawChart(){
   const dpr=window.devicePixelRatio||1;
   const c=document.getElementById('chart');
   const clientW=Math.max(1,c.clientWidth), clientH=Math.max(1,c.clientHeight);
   const W=clientW*dpr, H=clientH*dpr;
   c.width=W; c.height=H;
-  const padL=64*dpr, padR=18*dpr, padT=16*dpr, padB=42*dpr, innerW=W-padL-padR, innerH=H-padT-padB;
+
+  const isMobile = window.innerWidth <= 640;
+  const padL = (isMobile ? 12 : 64) * dpr;  // mindre padding i mobil → bredare diagram
+  const padR = 18*dpr, padT = 16*dpr, padB = 42*dpr;
+  const innerW=W-padL-padR, innerH=H-padT-padB;
   const ctx=c.getContext('2d');
   ctx.clearRect(0,0,W,H);
   if(innerW<=0 || innerH<=0) return;
 
-  const values = laps.map((l,i)=>{
-    const target = animTargets[i] ?? l.ms;
-    const p = (progressOverride!==null) ? progressOverride : (animProgress[i] ?? 1);
-    return target * Math.min(1, Math.max(0,p));
-  });
+  // värden: färdiga laps + ev. aktiv stapel
+  const values = laps.map(l=>l.ms);
+  if(running){
+    const current = Math.max(0, performance.now()-tStart);
+    values.push(current);
+  }
 
+  // autoskala
   const maxMsTmp = values.length ? Math.max(...values,10000) : 10000;
-  const maxS=Math.max(10,Math.ceil(maxMsTmp/1000/10)*10);
+  const maxS = Math.max(10, Math.ceil(maxMsTmp/1000/10)*10);
   const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
 
   // ram
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1*dpr; ctx.strokeRect(padL,padT,innerW,innerH);
 
-  // vänster tidsaxel + grid (00:00, 00:30, 01:00, ...)
+  // vänster grid + (etiketter endast om ej mobil)
   ctx.fillStyle='#475569'; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
   ctx.textBaseline='middle';
   for(let s=0;s<=maxS;s+=30){
     const y=msToY(s*1000);
     ctx.strokeStyle=s===0?'#cbd5e1':'#e5e7eb';
     ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
-    const m=Math.floor(s/60), sec=s%60;
-    ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y);
+    if(!isMobile){
+      const m=Math.floor(s/60), sec=s%60;
+      ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y);
+    }
   }
 
-  // staplar – rym alla (upp till 20+)
+  // staplar – rym alla
   const n=values.length;
   if(n){
-    const gap=4*dpr;
-    const bw=Math.max(8*dpr,(innerW-gap*(n-1))/n); // alltid inom rutan
+    const gap=Math.max(3*dpr, innerW/(n*20)); // liten, men skalar ned
+    const bw=Math.max(8*dpr,(innerW-gap*(n-1))/n);
     const palette=['#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb'];
+
     for(let i=0;i<n;i++){
       const ms=values[i];
       const x=padL+i*(bw+gap);
@@ -379,10 +383,10 @@ function drawChart(progressOverride=null){
       ctx.fillText(`${i+1}`,x+bw/2,H-padB+6*dpr);
     }
 
-    // Ø CT & BRCT linjer + etiketter med värde
+    // linjer – baserade på avslutade laps (ej aktiv stapel)
     const arr=laps.map(l=>l.ms);
-    const avg=avgMs(arr);
     if(arr.length){
+      const avg=avgMs(arr);
       const yAvg=msToY(avg);
       const avgText=`${L[lang].KPI_AVG_SHORT} ${formatMs(Math.round(avg))}`;
       ctx.setLineDash([6*dpr,4*dpr]);
@@ -391,48 +395,33 @@ function drawChart(progressOverride=null){
       ctx.setLineDash([]);
       ctx.fillStyle='#f97316'; ctx.textAlign='right'; ctx.textBaseline='bottom';
       ctx.fillText(avgText,W-4*dpr,yAvg-4*dpr);
-    }
-    const br=brctMs(arr);
-    if(br!==null){
-      const yBr=msToY(br);
-      const brText=`${L[lang].KPI_BRCT_SHORT} ${formatMs(Math.round(br))}`;
-      ctx.setLineDash([4*dpr,3*dpr]);
-      ctx.strokeStyle='#16a34a'; ctx.lineWidth=1.5*dpr;
-      ctx.beginPath(); ctx.moveTo(padL,yBr); ctx.lineTo(W-padR,yBr); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle='#16a34a'; ctx.textAlign='right'; ctx.textBaseline='top';
-      ctx.fillText(brText,W-4*dpr,yBr+4*dpr);
+
+      const br=brctMs(arr);
+      if(br!==null){
+        const yBr=msToY(br);
+        const brText=`${L[lang].KPI_BRCT_SHORT} ${formatMs(Math.round(br))}`;
+        ctx.setLineDash([4*dpr,3*dpr]);
+        ctx.strokeStyle='#16a34a'; ctx.lineWidth=1.5*dpr;
+        ctx.beginPath(); ctx.moveTo(padL,yBr); ctx.lineTo(W-padR,yBr); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle='#16a34a'; ctx.textAlign='right'; ctx.textBaseline='top';
+        ctx.fillText(brText,W-4*dpr,yBr+4*dpr);
+      }
     }
   }
 }
 
-/* enkel animationsloop för senaste stapeln */
-function animateBars(){
-  if(animRunning) return;
-  animRunning=true;
-  const start=performance.now();
-  const DUR=400; // ms
-  function step(now){
-    const t=Math.min(1,(now-start)/DUR);
-    // öka bara de som <1
-    let still=false;
-    animProgress = animProgress.map(p=>{
-      const np = Math.min(1, p + 0.08); // smidig easing
-      if(np<1) still=true;
-      return Math.max(p,np);
-    });
-    drawChart();
-    if(still) requestAnimationFrame(step);
-    else animRunning=false;
-  }
-  requestAnimationFrame(step);
+/* Live-loop för aktiv stapel */
+function loop(){
+  drawChart();
+  if(running) rafId = requestAnimationFrame(loop);
+  else rafId = null;
 }
-
-function refreshUI({save=true,skipDraw=false}={}){
-  renderList();
-  if(!skipDraw) drawChart();
-  updateKPIs();
-  if(save) saveState();
+function startLoop(){
+  if(rafId==null) rafId = requestAnimationFrame(loop);
+}
+function stopLoop(){
+  if(rafId!=null){ cancelAnimationFrame(rafId); rafId=null; }
 }
 
 /* ===== Persistens ===== */
@@ -459,13 +448,11 @@ function loadState(){
       }
       if(typeof stored.process==='string') processInput.value=stored.process;
       if(typeof stored.date==='string') dateInput.value=stored.date;
-      animTargets = laps.map(l=>l.ms);
-      animProgress = laps.map(()=>1);
     }
   }catch(err){ console.warn('Failed to load state', err); }
 }
 
-/* ===== Språkväxling (en enda knapp) ===== */
+/* ===== Språkknapp ===== */
 function toggleLanguage(){
   lang = (lang==='sv') ? 'en' : 'sv';
   setLangTexts();
@@ -493,7 +480,6 @@ function resetApp(){
   if(!confirm(lang==='sv'?'Är du säker på att du vill nollställa?':'Are you sure you want to reset?')) return;
   if(running){ stopTimer(); }
   laps=[]; selectedIndex=-1; processInput.value=''; dateInput.value='';
-  animTargets=[]; animProgress=[];
   refreshUI();
 }
 
@@ -501,7 +487,7 @@ function resetApp(){
 function init(){
   loadState();
   setLangTexts();
-  refreshUI({save:false});
+  refreshUI();
   stopBtn.disabled=true;
   timerDisp.textContent='00:00.00';
 
@@ -511,7 +497,10 @@ function init(){
   document.getElementById('btnReset').addEventListener('click', resetApp);
   processInput.addEventListener('input', saveState);
   dateInput.addEventListener('input', saveState);
-  window.addEventListener('resize', drawChart);
+  window.addEventListener('resize', ()=>{ drawChart(); });
+
+  // säkerställ ny ritning vid språkbyte eller resize
+  drawChart();
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
