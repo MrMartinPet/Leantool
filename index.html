@@ -499,6 +499,17 @@ function resetApp(){
   refreshUI();
 }
 
+/* ===== Refresh UI ===== */
+function refreshUI(){
+  renderList();
+  updateKPIs();
+  drawChart();
+  saveState();
+}
+
+
+
+  
 /* ===== Init ===== */
 function init(){
   loadState();
@@ -522,6 +533,7 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
 
 
 
