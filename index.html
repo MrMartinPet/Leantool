@@ -235,12 +235,15 @@ function lap(){
   const now = performance.now();
   const elapsed = Math.max(10, now - tStart);
 
-  // Viktigt: nollställ starttiden FÖRST
+  // Nollställ starttid så nästa stapel börjar från 0
   tStart = now;
   timerDisp.textContent = '00:00.00';
 
-  // Lägg till stapeln
-  addLap(elapsed);
+  // Lägg till stapeln och uppdatera UI + spara
+  laps.push({ms: elapsed, note: ''});
+  refreshUI();
+  saveState();
+}
 }
 function stopTimer(){
   if(running){
@@ -520,5 +523,6 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
 
 
