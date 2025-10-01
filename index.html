@@ -241,9 +241,10 @@ function lap(){
 
   // Lägg till stapeln och uppdatera UI + spara
   laps.push({ms: elapsed, note: ''});
+  selectedIndex = laps.length - 1; // markera senaste raden
   refreshUI();
-  saveState();
 }
+
 function stopTimer(){
   if(running){
     running=false;
@@ -336,7 +337,7 @@ function drawChart(){
   c.width=W; c.height=H;
 
   const isMobile = window.innerWidth <= 640;
-  const padL = (isMobile ? 12 : 64) * dpr;  // mindre padding i mobil → bredare diagram
+  const padL = (isMobile ? 40 : 64) * dpr;  // mindre padding i mobil → bredare diagram
   const padR = 18*dpr, padT = 16*dpr, padB = 42*dpr;
   const innerW=W-padL-padR, innerH=H-padT-padB;
   const ctx=c.getContext('2d');
@@ -533,6 +534,7 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
 
 
 
