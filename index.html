@@ -232,10 +232,15 @@ function addLap(ms,note=''){
 }
 function lap(){
   if(!running) return;
-  const elapsed=Math.max(10, performance.now()-tStart);
+  const now = performance.now();
+  const elapsed = Math.max(10, now - tStart);
+
+  // Viktigt: nollställ starttiden FÖRST
+  tStart = now;
+  timerDisp.textContent = '00:00.00';
+
+  // Lägg till stapeln
   addLap(elapsed);
-  tStart=performance.now();
-  timerDisp.textContent='00:00.00';
 }
 function stopTimer(){
   if(running){
@@ -506,3 +511,4 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
