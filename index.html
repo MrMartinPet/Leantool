@@ -200,7 +200,7 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[]; // {ms,note}
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
-const STORAGE_KEY='cycle-check-state-v5'; // bump
+const STORAGE_KEY='cycle-check-state-v6'; // bump for new features
 
 /* Live-teckning */
 let rafId=null;
@@ -300,7 +300,7 @@ function deleteSelected(){
   refreshUI();
 }
 
-/* ===== Lista/KPI/Diagram ===== */
+/* ===== Lista/KPI ===== */
 function renderList(){
   const list=$('#list'); list.innerHTML='';
   laps.forEach((l,i)=>{
@@ -386,19 +386,6 @@ function drawChart(){
     }
   }
 
-  // Kundtaktlinje
-  const taktVal = Number(taktInput.value || 0);
-  if (taktVal > 0) {
-    const yTakt = msToY(taktVal * 1000);
-    ctx.setLineDash([2*dpr, 3*dpr]);
-    ctx.strokeStyle = '#dc2626';  // röd taktlina
-    ctx.lineWidth = 1.5 * dpr;
-    ctx.beginPath(); ctx.moveTo(padL, yTakt); ctx.lineTo(W - padR, yTakt); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#dc2626'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.fillText(`${L[lang].TAKT_LABEL} ${taktVal}s`, W - 4*dpr, yTakt - 4*dpr);
-  }
-
   // staplar
   const n=values.length;
   if(n){
@@ -443,6 +430,19 @@ function drawChart(){
         ctx.fillText(brText,W-4*dpr,yBr+4*dpr);
       }
     }
+  }
+
+  // *** KUNDTakt LINJE — ritas SIST (ovanför staplarna) ***
+  const taktVal = Number(taktInput.value || 0);
+  if (taktVal > 0) {
+    const yTakt = msToY(taktVal * 1000);
+    ctx.setLineDash([2*dpr, 3*dpr]);
+    ctx.strokeStyle = '#dc2626';  // röd taktlina
+    ctx.lineWidth = 1.7 * dpr;
+    ctx.beginPath(); ctx.moveTo(padL, yTakt); ctx.lineTo(W - padR, yTakt); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#dc2626'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText(`${L[lang].TAKT_LABEL} ${taktVal}s`, W - 4*dpr, yTakt - 4*dpr);
   }
 }
 
@@ -496,8 +496,8 @@ function toggleLanguage(){
   refreshUI();
 }
 
-/* ===== Export CSV ===== */
-function exportCSV(){
+/* ===== DELNING / NEDLADDNING HJÄLPARE ===== */
+function buildCSVBlob() {
   const rows=[];
   rows.push(['Process', processInput.value||'']);
   rows.push(['Date', dateInput.value||'']);
@@ -508,27 +508,80 @@ function exportCSV(){
     rows.push([`${i+1}`, lap.ms, formatSecondsForCSV(lap.ms), (lap.note||'').replace(/\n/g,' ')]);
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  return new Blob([csv],{type:'text/csv;charset=utf-8;'});
+}
+function downloadBlob(blob, filename){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url; a.download=`20-cycle-check-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+async function shareOrDownloadFile(blob, filename, mime, preferShare=true){
+  try{
+    const file = new File([blob], filename, { type: mime });
+    if (preferShare && navigator.canShare && navigator.canShare({ files:[file] })) {
+      await navigator.share({
+        files: [file],
+        title: filename,
+        text: (lang==='sv' ? 'Se bifogad fil.' : 'See attached file.')
+      });
+      return;
+    }
+  }catch(e){
+    // fallback
+  }
+  downloadBlob(blob, filename);
 }
 
-/* ===== Export PDF-rapport ===== */
+/* ===== Export CSV ===== */
+async function exportCSV(){
+  const stamp = new Date().toISOString().slice(0,10);
+  const blob = buildCSVBlob();
+  const filename = `20-cycle-check-${stamp}.csv`;
+  const ask = (lang==='sv')
+    ? 'Vill du skicka via e-post/DELNING (OK) eller bara ladda ner (Avbryt)?'
+    : 'Send via email/SHARE (OK) or just download (Cancel)?';
+  const preferShare = window.confirm(ask);
+  await shareOrDownloadFile(blob, filename, 'text/csv', preferShare);
+}
+
+/* ===== Export PDF-rapport (A4 liggande) ===== */
 async function exportReport(){
+  // Se till att diagrammet är ritat med aktuell taktlina
+  drawChart();
+
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pdf = new jsPDF('l', 'mm', 'a4'); // landscape A4
 
-  const M = 12; let y = M;
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const M = 12; // marginal
+  let x = M, y = M;
 
-  pdf.setFontSize(16);
-  const title = '20 Cycle Check — ' + (processInput.value || '');
-  pdf.text(title, M, y); y += 8;
+  // Header
+  pdf.setFillColor(245,247,250);
+  pdf.roundedRect(M-2, M-6, pageW-2*M+4, 16, 3, 3, 'F');
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(16);
+  pdf.text('20 Cycle Check', x, y+5);
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(11);
+  pdf.text((lang==='sv'?'Process: ':'Process: ') + (processInput.value||'—'), x+70, y+5);
+  pdf.text((lang==='sv'?'Datum: ':'Date: ') + (dateInput.value||'—'), x+140, y+5);
+  y += 20;
 
-  pdf.setFontSize(11);
-  pdf.text((lang==='sv'?'Datum: ':'Date: ') + (dateInput.value || ''), M, y); y += 6;
+  // Vänster: stort diagram
+  const canvas = document.getElementById('chart');
+  const imgData = canvas.toDataURL('image/png', 1.0);
+  const chartW = pageW * 0.60 - M; // ~60% bredd
+  const chartH = pageH - y - M;    // fyll höjden
+  pdf.roundedRect(x-2, y-2, chartW+4, chartH+4, 3, 3);
+  pdf.addImage(imgData, 'PNG', x, y, chartW, chartH, undefined, 'FAST');
 
+  // Höger: KPI-kort + tabell
+  const rightX = x + chartW + 10;
+  let ry = y;
+
+  // KPI-rutor
   const arr = laps.map(l=>l.ms);
   const avg = avgMs(arr);
   const br = brctMs(arr);
@@ -537,26 +590,70 @@ async function exportReport(){
   const dPct = disturbanceRate(avg, br);
   const taktVal = Number(taktInput.value || 0);
 
-  const canvas = document.getElementById('chart');
-  const imgData = canvas.toDataURL('image/png', 1.0);
-  const imgW = 190, imgH = 95;
-  pdf.addImage(imgData, 'PNG', M, y, imgW, imgH, undefined, 'FAST');
-  y += imgH + 8;
-
-  pdf.setFontSize(12);
+  function kpi(label, value){
+    pdf.setDrawColor(229,231,235);
+    pdf.setFillColor(255,255,255);
+    pdf.roundedRect(rightX, ry, pageW-rightX-M, 12, 2, 2, 'FD');
+    pdf.setFontSize(10); pdf.setTextColor(107,114,128);
+    pdf.text(label, rightX+3, ry+4.5);
+    pdf.setFontSize(12); pdf.setTextColor(15,23,42);
+    pdf.text(value, rightX+3, ry+9);
+    ry += 14;
+  }
   const lab = L[lang];
-  const lines = [
-    `${lab.KPI_AVG} ${arr.length?formatMs(Math.round(avg)):'00:00.00'}`,
-    `${lab.KPI_BRCT} ${br!==null?formatMs(Math.round(br)):'–'}`,
-    `${lab.LONGEST} ${arr.length?formatMs(longest):'–'}`,
-    `${lab.SHORTEST} ${arr.length?formatMs(shortest):'–'}`,
-    `${lab.TAKT_LABEL} ${taktVal>0? (taktVal+'s') : '–'}`,
-    `${lab.DISTURBANCE} ${dPct.toFixed(1)}%`
-  ];
-  lines.forEach(line=>{ pdf.text(line, M, y); y += 7; });
+  kpi(lab.KPI_AVG, arr.length?formatMs(Math.round(avg)):'00:00.00');
+  kpi(lab.KPI_BRCT, br!==null?formatMs(Math.round(br)):'–');
+  kpi(lab.LONGEST, arr.length?formatMs(longest):'–');
+  kpi(lab.SHORTEST, arr.length?formatMs(shortest):'–');
+  kpi(lab.TAKT_LABEL, taktVal>0? (taktVal+'s') : '–');
+  kpi(lab.DISTURBANCE, dPct.toFixed(1)+'%');
 
-  const stamp = new Date().toISOString().slice(0,10);
-  pdf.save(`20-cycle-check-report-${stamp}.pdf`);
+  ry += 4;
+
+  // Tabell med cykler (så många som ryms)
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(12);
+  pdf.text(lang==='sv'?'Cykler':'Cycles', rightX, ry); ry += 6;
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
+
+  // Header
+  const colW1 = 16, colW2 = 26, colW3 = (pageW-rightX-M) - colW1 - colW2 - 4;
+  const rowH = 6;
+  function row(x1,y1,vals,bold=false){
+    pdf.setFont('helvetica', bold?'bold':'normal'); pdf.setFontSize(10);
+    pdf.text(String(vals[0]), x1+2, y1+4);
+    pdf.text(String(vals[1]), x1+2+colW1, y1+4);
+    const note = String(vals[2]||'');
+    pdf.text(note.substring(0,40), x1+2+colW1+colW2, y1+4);
+    pdf.setDrawColor(229,231,235);
+    pdf.line(x1, y1+rowH, x1+colW1+colW2+colW3, y1+rowH);
+  }
+  // header line
+  pdf.setDrawColor(229,231,235);
+  pdf.line(rightX, ry, rightX+colW1+colW2+colW3, ry);
+  row(rightX, ry, [lang==='sv'?'Nr':'No', lang==='sv'?'Tid':'Time', lang==='sv'?'Anteckning':'Notes'], true);
+  ry += rowH;
+
+  const maxRows = Math.floor((pageH - ry - M)/rowH);
+  const timesToShow = Math.min(maxRows, laps.length);
+  for(let i=0;i<timesToShow;i++){
+    const l = laps[i];
+    row(rightX, ry, [i+1, formatMs(l.ms), (l.note||'')], false);
+    ry += rowH;
+  }
+
+  // Footer
+  pdf.setFontSize(9); pdf.setTextColor(107,114,128);
+  const stamp = new Date().toISOString().slice(0,19).replace('T',' ');
+  pdf.text((lang==='sv'?'Genererad: ':'Generated: ') + stamp, M, pageH - 6);
+  pdf.text('© 20 Cycle Check', pageW - M - 28, pageH - 6);
+
+  const filename = `20-cycle-check-report-${new Date().toISOString().slice(0,10)}.pdf`;
+  const pdfBlob = pdf.output('blob');
+  const preferShare = window.confirm(lang==='sv'
+    ? 'Vill du skicka rapporten via e-post/DELNING (OK) eller ladda ner (Avbryt)?'
+    : 'Share report via email/SHARE (OK) or download (Cancel)?'
+  );
+  await shareOrDownloadFile(pdfBlob, filename, 'application/pdf', preferShare);
 }
 
 /* ===== Reset ===== */
