@@ -36,14 +36,16 @@
   .btn.danger{background:#fee2e2;border-color:#fecaca}
   .btn.small{min-height:34px;padding:6px 10px;font-size:var(--fs-sm)}
 
-  /* Övre grid: Process/Datum + Start/Timer/Stop */
+  /* Övre grid: Process/Datum/TAKT + Start/Timer/Stop */
   .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
   .pad{padding:8px}
   label{font-size:var(--fs-sm);color:var(--muted)}
-  input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  input[type=text], input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
 
-  .lang-card .row2{display:grid;grid-template-columns:1fr 160px;gap:8px}
+  /* Tre kolumner: Process | Datum | Takt */
+  .lang-card .row2{display:grid;grid-template-columns:1fr 140px 90px;gap:8px}
+
   .timer-card .controls{display:flex;gap:8px;align-items:center}
   .timer-card .controls > *{min-width:0}
   .timer-card .start{flex:0 0 35%}
@@ -105,11 +107,12 @@
     <div class="menu-actions">
       <button id="btnLang" class="langbtn"><span class="flag">🇸🇪</span><span id="langLabel">SV</span></button>
       <button id="btnExport" class="btn small">Exportera</button>
+      <button id="btnReport" class="btn small">Rapport (PDF)</button>
       <button id="btnReset" class="btn small danger">Nollställ</button>
     </div>
   </div>
 
-  <!-- Process/Datum  |  Start/Timer/Stop -->
+  <!-- Process/Datum/TAKT  |  Start/Timer/Stop -->
   <div class="top-grid">
     <div class="card pad lang-card">
       <div class="row2">
@@ -120,6 +123,10 @@
         <div>
           <label id="lblDate">DATE</label>
           <input id="date" type="text" placeholder="yyyy-mm-dd">
+        </div>
+        <div>
+          <label id="lblTakt">TAKT</label>
+          <input id="takt" type="number" min="0" step="1" placeholder="sek">
         </div>
       </div>
     </div>
@@ -160,19 +167,26 @@
   </div>
 </div>
 
+<!-- jsPDF för PDF-export -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
 <script>
 /* ===== i18n ===== */
 const L={
   sv:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Ange processnamn…",PH_DATE:"yyyy-mm-dd",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Varv",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Exportera",
+      TAKT:"TAKT", PH_TAKT:"sek", TAKT_LABEL:"Kundtakt:",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Varv",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Exportera",REPORT:"Rapport (PDF)",
       RESULTS_TITLE:"Resultat",
       KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",
-      KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:","},
+      KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:",",
+      LONGEST:"Längsta CT:", SHORTEST:"Kortaste CT:", DISTURBANCE:"D %:"},
   en:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Lap",STOP:"Stop",RESET:"Reset",EXPORT:"Export",
+      TAKT:"TAKT", PH_TAKT:"sec", TAKT_LABEL:"Takt:",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Lap",STOP:"Stop",RESET:"Reset",EXPORT:"Export",REPORT:"Report (PDF)",
       RESULTS_TITLE:"Results",
       KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",
-      KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:"."}
+      KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:".",
+      LONGEST:"Longest CT:", SHORTEST:"Shortest CT:", DISTURBANCE:"D %:"}
 };
 let lang='sv';
 const $=s=>document.querySelector(s);
@@ -186,13 +200,13 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[]; // {ms,note}
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
-const STORAGE_KEY='cycle-check-state-v4';
+const STORAGE_KEY='cycle-check-state-v5'; // bump
 
 /* Live-teckning */
 let rafId=null;
 
 /* ===== UI refs ===== */
-const processInput=$('#process'), dateInput=$('#date');
+const processInput=$('#process'), dateInput=$('#date'), taktInput=$('#takt');
 const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp');
 const chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
 
@@ -200,9 +214,12 @@ const chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
 function setLangTexts(){
   $('#lblProcess').textContent=L[lang].PROCESS;
   $('#lblDate').textContent=L[lang].DATE;
+  $('#lblTakt').textContent=L[lang].TAKT;
   $('#process').placeholder=L[lang].PH_PROCESS;
   $('#date').placeholder=L[lang].PH_DATE;
+  taktInput.placeholder=L[lang].PH_TAKT;
   $('#btnExport').textContent=L[lang].EXPORT;
+  $('#btnReport').textContent=L[lang].REPORT;
   $('#btnReset').textContent=L[lang].RESET;
   $('#resultsTitle').textContent=L[lang].RESULTS_TITLE;
   $('#kpiAvgLabel').textContent=L[lang].KPI_AVG;
@@ -214,7 +231,7 @@ function setLangTexts(){
   renderList();
 }
 
-/* ===== Timer (live-barlinje) ===== */
+/* ===== Timer ===== */
 function startTimer(){
   if(running) return;
   running=true;
@@ -226,25 +243,16 @@ function startTimer(){
   stopBtn.disabled=false;
   startLoop();
 }
-function addLap(ms,note=''){
-  laps.push({ms,note});
-  refreshUI();
-}
 function lap(){
   if(!running) return;
   const now = performance.now();
   const elapsed = Math.max(10, now - tStart);
-
-  // Nollställ starttid så nästa stapel börjar från 0
   tStart = now;
   timerDisp.textContent = '00:00.00';
-
-  // Lägg till stapeln och uppdatera UI + spara
   laps.push({ms: elapsed, note: ''});
-  selectedIndex = laps.length - 1; // markera senaste raden
+  selectedIndex = laps.length - 1;
   refreshUI();
 }
-
 function stopTimer(){
   if(running){
     running=false;
@@ -254,7 +262,7 @@ function stopTimer(){
   stopBtn.disabled=true;
   timerDisp.textContent='00:00.00';
   stopLoop();
-  refreshUI(); // slutlig ritning utan aktiv stapel
+  refreshUI();
 }
 function toggle(){ running ? lap() : startTimer(); }
 toggleBtn.addEventListener('click', toggle);
@@ -322,13 +330,17 @@ function renderList(){
 
 function avgMs(a){return a.length? a.reduce((x,y)=>x+y,0)/a.length:0}
 function brctMs(a){ if(a.length<5) return null; return avgMs([...a].sort((x,y)=>x-y).slice(0,5)); }
+function longestMs(arr){ return arr.length ? Math.max(...arr) : 0; }
+function shortestMs(arr){ return arr.length ? Math.min(...arr) : 0; }
+function disturbanceRate(avg, br){ return (avg>0 && br!==null) ? ((avg - br)/avg*100) : 0; }
+
 function updateKPIs(){
   const arr=laps.map(x=>x.ms), avg=avgMs(arr), br=brctMs(arr);
   $('#kpiAvg').textContent=arr.length?formatMs(Math.round(avg)):'00:00.00';
   $('#kpiBrct').textContent=br!==null?formatMs(Math.round(br)):'–';
 }
 
-/* ===== Diagram – live aktiv stapel, inga 00:00-etiketter i mobil ===== */
+/* ===== Diagram ===== */
 function drawChart(){
   const dpr=window.devicePixelRatio||1;
   const c=document.getElementById('chart');
@@ -337,7 +349,7 @@ function drawChart(){
   c.width=W; c.height=H;
 
   const isMobile = window.innerWidth <= 640;
-  const padL = (isMobile ? 40 : 64) * dpr;  // mindre padding i mobil → bredare diagram
+  const padL = (isMobile ? 40 : 64) * dpr;
   const padR = 18*dpr, padT = 16*dpr, padB = 42*dpr;
   const innerW=W-padL-padR, innerH=H-padT-padB;
   const ctx=c.getContext('2d');
@@ -356,40 +368,41 @@ function drawChart(){
   const maxS = Math.max(10, Math.ceil(maxMsTmp/1000/10)*10);
   const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
 
-// Dynamisk vertikal tidsaxel + rutnät (1s linjer, var 5s tydligare + etikett)
-ctx.font = `${12*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
-ctx.textBaseline = 'middle';
-
-for (let s = 0; s <= maxS; s++) {
-  const y = msToY(s * 1000);
-
-  // Var 1 sekund: tunn ljus linje
-  ctx.strokeStyle = '#e2e8f0';   // ljusgrå
-  ctx.lineWidth = 1 * dpr;
-  ctx.beginPath();
-  ctx.moveTo(padL, y);
-  ctx.lineTo(W - padR, y);
-  ctx.stroke();
-
-  // Var 5:e sekund: mörkare linje + tidsetikett
-  if (s % 5 === 0) {
-    ctx.strokeStyle = '#94a3b8'; // lite mörkare grå
-    ctx.lineWidth = 1.5 * dpr;
-    ctx.beginPath();
-    ctx.moveTo(padL, y);
-    ctx.lineTo(W - padR, y);
-    ctx.stroke();
-
-    const m = Math.floor(s / 60), sec = s % 60;
-    ctx.fillStyle = '#334155';    // mörk text för etikett
-    ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`, 4*dpr, y);
+  /* Rutnät varje sekund, var 5:e tydligare + etikett */
+  ctx.font = `${12*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+  ctx.textBaseline = 'middle';
+  for (let s = 0; s <= maxS; s++) {
+    const y = msToY(s * 1000);
+    // 1s linje
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1 * dpr;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    // 5s linje + etikett
+    if (s % 5 === 0) {
+      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5 * dpr;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+      const m = Math.floor(s / 60), sec = s % 60;
+      ctx.fillStyle = '#334155';
+      ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`, 4*dpr, y);
+    }
   }
-}
 
-  // staplar – rym alla
+  // Kundtaktlinje
+  const taktVal = Number(taktInput.value || 0);
+  if (taktVal > 0) {
+    const yTakt = msToY(taktVal * 1000);
+    ctx.setLineDash([2*dpr, 3*dpr]);
+    ctx.strokeStyle = '#dc2626';  // röd taktlina
+    ctx.lineWidth = 1.5 * dpr;
+    ctx.beginPath(); ctx.moveTo(padL, yTakt); ctx.lineTo(W - padR, yTakt); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#dc2626'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText(`${L[lang].TAKT_LABEL} ${taktVal}s`, W - 4*dpr, yTakt - 4*dpr);
+  }
+
+  // staplar
   const n=values.length;
   if(n){
-    const gap=Math.max(3*dpr, innerW/(n*20)); // liten, men skalar ned
+    const gap=Math.max(3*dpr, innerW/(n*20));
     const bw=Math.max(8*dpr,(innerW-gap*(n-1))/n);
     const palette=['#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb'];
 
@@ -405,7 +418,7 @@ for (let s = 0; s <= maxS; s++) {
       ctx.fillText(`${i+1}`,x+bw/2,H-padB+6*dpr);
     }
 
-    // linjer – baserade på avslutade laps (ej aktiv stapel)
+    // KPI-linjer (endast avslutade laps)
     const arr=laps.map(l=>l.ms);
     if(arr.length){
       const avg=avgMs(arr);
@@ -453,7 +466,8 @@ function saveState(){
       lang,
       laps:laps.map(l=>({ms:l.ms,note:l.note||''})),
       process:processInput.value||'',
-      date:dateInput.value||''
+      date:dateInput.value||'',
+      takt:Number(taktInput.value)||0
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }catch(err){ console.warn('Failed to save state', err); }
@@ -470,6 +484,7 @@ function loadState(){
       }
       if(typeof stored.process==='string') processInput.value=stored.process;
       if(typeof stored.date==='string') dateInput.value=stored.date;
+      if(typeof stored.takt==='number') taktInput.value = stored.takt || '';
     }
   }catch(err){ console.warn('Failed to load state', err); }
 }
@@ -481,11 +496,12 @@ function toggleLanguage(){
   refreshUI();
 }
 
-/* ===== Export & Reset ===== */
+/* ===== Export CSV ===== */
 function exportCSV(){
   const rows=[];
   rows.push(['Process', processInput.value||'']);
   rows.push(['Date', dateInput.value||'']);
+  rows.push(['Takt (s)', Number(taktInput.value)||0]);
   rows.push([]);
   rows.push(['Cycle','ms','sec','Notes']);
   laps.forEach((lap,i)=>{
@@ -498,10 +514,56 @@ function exportCSV(){
   a.href=url; a.download=`20-cycle-check-${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
+
+/* ===== Export PDF-rapport ===== */
+async function exportReport(){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+
+  const M = 12; let y = M;
+
+  pdf.setFontSize(16);
+  const title = '20 Cycle Check — ' + (processInput.value || '');
+  pdf.text(title, M, y); y += 8;
+
+  pdf.setFontSize(11);
+  pdf.text((lang==='sv'?'Datum: ':'Date: ') + (dateInput.value || ''), M, y); y += 6;
+
+  const arr = laps.map(l=>l.ms);
+  const avg = avgMs(arr);
+  const br = brctMs(arr);
+  const longest = longestMs(arr);
+  const shortest = shortestMs(arr);
+  const dPct = disturbanceRate(avg, br);
+  const taktVal = Number(taktInput.value || 0);
+
+  const canvas = document.getElementById('chart');
+  const imgData = canvas.toDataURL('image/png', 1.0);
+  const imgW = 190, imgH = 95;
+  pdf.addImage(imgData, 'PNG', M, y, imgW, imgH, undefined, 'FAST');
+  y += imgH + 8;
+
+  pdf.setFontSize(12);
+  const lab = L[lang];
+  const lines = [
+    `${lab.KPI_AVG} ${arr.length?formatMs(Math.round(avg)):'00:00.00'}`,
+    `${lab.KPI_BRCT} ${br!==null?formatMs(Math.round(br)):'–'}`,
+    `${lab.LONGEST} ${arr.length?formatMs(longest):'–'}`,
+    `${lab.SHORTEST} ${arr.length?formatMs(shortest):'–'}`,
+    `${lab.TAKT_LABEL} ${taktVal>0? (taktVal+'s') : '–'}`,
+    `${lab.DISTURBANCE} ${dPct.toFixed(1)}%`
+  ];
+  lines.forEach(line=>{ pdf.text(line, M, y); y += 7; });
+
+  const stamp = new Date().toISOString().slice(0,10);
+  pdf.save(`20-cycle-check-report-${stamp}.pdf`);
+}
+
+/* ===== Reset ===== */
 function resetApp(){
   if(!confirm(lang==='sv'?'Är du säker på att du vill nollställa?':'Are you sure you want to reset?')) return;
   if(running){ stopTimer(); }
-  laps=[]; selectedIndex=-1; processInput.value=''; dateInput.value='';
+  laps=[]; selectedIndex=-1; processInput.value=''; dateInput.value=''; taktInput.value='';
   refreshUI();
 }
 
@@ -513,9 +575,6 @@ function refreshUI(){
   saveState();
 }
 
-
-
-  
 /* ===== Init ===== */
 function init(){
   loadState();
@@ -527,22 +586,16 @@ function init(){
   // handlers
   document.getElementById('btnLang').addEventListener('click', toggleLanguage);
   document.getElementById('btnExport').addEventListener('click', exportCSV);
+  document.getElementById('btnReport').addEventListener('click', exportReport);
   document.getElementById('btnReset').addEventListener('click', resetApp);
   processInput.addEventListener('input', saveState);
   dateInput.addEventListener('input', saveState);
+  taktInput.addEventListener('input', ()=>{ saveState(); drawChart(); });
   window.addEventListener('resize', ()=>{ drawChart(); });
 
-  // säkerställ ny ritning vid språkbyte eller resize
   drawChart();
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
