@@ -353,21 +353,30 @@ function drawChart(){
   const maxS = Math.max(10, Math.ceil(maxMsTmp/1000/10)*10);
   const msToY = ms => padT+innerH-(ms/(maxS*1000))*innerH;
 
-  // ram
-  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1*dpr; ctx.strokeRect(padL,padT,innerW,innerH);
+// Dynamisk vertikal tidsaxel + rutnät
+ctx.fillStyle = '#475569';
+ctx.font = `${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+ctx.textBaseline = 'middle';
 
-  // vänster grid + (etiketter endast om ej mobil)
-  ctx.fillStyle='#475569'; ctx.font=`${11*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
-  ctx.textBaseline='middle';
-  for(let s=0;s<=maxS;s+=30){
-    const y=msToY(s*1000);
-    ctx.strokeStyle=s===0?'#cbd5e1':'#e5e7eb';
-    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
-    if(!isMobile){
-      const m=Math.floor(s/60), sec=s%60;
-      ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`,8*dpr,y);
-    }
+// välj intervall för etiketter (10s om kort, 30s om längre tider)
+let step = maxS <= 60 ? 10 : 30;
+
+for(let s = 0; s <= maxS; s += step){
+  const y = msToY(s*1000);
+
+  // rita ljus rutnätslinje
+  ctx.strokeStyle = '#f1f5f9'; // väldigt ljus
+  ctx.beginPath();
+  ctx.moveTo(padL, y);
+  ctx.lineTo(W - padR, y);
+  ctx.stroke();
+
+  // rita tidsmarkering (ej i mobil)
+  if(!isMobile){
+    const m = Math.floor(s/60), sec = s % 60;
+    ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`, 8*dpr, y);
   }
+}
 
   // staplar – rym alla
   const n=values.length;
@@ -511,4 +520,5 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
 
