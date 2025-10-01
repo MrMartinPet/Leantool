@@ -200,7 +200,7 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[]; // {ms,note}
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
-const STORAGE_KEY='cycle-check-state-v6'; // bump for new features
+const STORAGE_KEY='cycle-check-state-v6';
 
 /* Live-teckning */
 let rafId=null;
@@ -208,7 +208,7 @@ let rafId=null;
 /* ===== UI refs ===== */
 const processInput=$('#process'), dateInput=$('#date'), taktInput=$('#takt');
 const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp');
-const chart=$('#chart'), ctx=chart.getContext('2d',{willReadFrequently:true});
+const chart=$('#chart');
 
 /* ===== i18n apply ===== */
 function setLangTexts(){
@@ -350,7 +350,7 @@ function drawChart(){
 
   const isMobile = window.innerWidth <= 640;
   const padL = (isMobile ? 40 : 64) * dpr;
-  const padR = 18*dpr, padT = 16*dpr, padB = 42*dpr;
+  const padR = 96*dpr, padT = 16*dpr, padB = 42*dpr; /* större högerpad för etikettboxar */
   const innerW=W-padL-padR, innerH=H-padT-padB;
   const ctx=c.getContext('2d');
   ctx.clearRect(0,0,W,H);
@@ -373,12 +373,10 @@ function drawChart(){
   ctx.textBaseline = 'middle';
   for (let s = 0; s <= maxS; s++) {
     const y = msToY(s * 1000);
-    // 1s linje
-    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1 * dpr;
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1 * dpr; // varje sekund
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
-    // 5s linje + etikett
     if (s % 5 === 0) {
-      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5 * dpr;
+      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5 * dpr; // var 5:e
       ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
       const m = Math.floor(s / 60), sec = s % 60;
       ctx.fillStyle = '#334155';
@@ -404,46 +402,88 @@ function drawChart(){
       ctx.textAlign='center'; ctx.textBaseline='top';
       ctx.fillText(`${i+1}`,x+bw/2,H-padB+6*dpr);
     }
+  }
 
-    // KPI-linjer (endast avslutade laps)
-    const arr=laps.map(l=>l.ms);
-    if(arr.length){
-      const avg=avgMs(arr);
-      const yAvg=msToY(avg);
-      const avgText=`${L[lang].KPI_AVG_SHORT} ${formatMs(Math.round(avg))}`;
-      ctx.setLineDash([6*dpr,4*dpr]);
-      ctx.strokeStyle='#f97316'; ctx.lineWidth=1.5*dpr;
-      ctx.beginPath(); ctx.moveTo(padL,yAvg); ctx.lineTo(W-padR,yAvg); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle='#f97316'; ctx.textAlign='right'; ctx.textBaseline='bottom';
-      ctx.fillText(avgText,W-4*dpr,yAvg-4*dpr);
-
-      const br=brctMs(arr);
-      if(br!==null){
-        const yBr=msToY(br);
-        const brText=`${L[lang].KPI_BRCT_SHORT} ${formatMs(Math.round(br))}`;
-        ctx.setLineDash([4*dpr,3*dpr]);
-        ctx.strokeStyle='#16a34a'; ctx.lineWidth=1.5*dpr;
-        ctx.beginPath(); ctx.moveTo(padL,yBr); ctx.lineTo(W-padR,yBr); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle='#16a34a'; ctx.textAlign='right'; ctx.textBaseline='top';
-        ctx.fillText(brText,W-4*dpr,yBr+4*dpr);
-      }
+  /* ----- Guide-linjer + etiketter (med kollision-avoidance) ----- */
+  const arr=laps.map(l=>l.ms);
+  const guides=[]; // {y,color,text}
+  if(arr.length){
+    const avg=avgMs(arr);
+    guides.push({ y: msToY(avg), color:'#f97316', text:`${L[lang].KPI_AVG_SHORT} ${formatMs(Math.round(avg))}`, dash:[6*dpr,4*dpr] });
+    const br=brctMs(arr);
+    if(br!==null){
+      guides.push({ y: msToY(br), color:'#16a34a', text:`${L[lang].KPI_BRCT_SHORT} ${formatMs(Math.round(br))}`, dash:[4*dpr,3*dpr] });
     }
   }
-
-  // *** KUNDTakt LINJE — ritas SIST (ovanför staplarna) ***
   const taktVal = Number(taktInput.value || 0);
-  if (taktVal > 0) {
-    const yTakt = msToY(taktVal * 1000);
-    ctx.setLineDash([2*dpr, 3*dpr]);
-    ctx.strokeStyle = '#dc2626';  // röd taktlina
-    ctx.lineWidth = 1.7 * dpr;
-    ctx.beginPath(); ctx.moveTo(padL, yTakt); ctx.lineTo(W - padR, yTakt); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#dc2626'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.fillText(`${L[lang].TAKT_LABEL} ${taktVal}s`, W - 4*dpr, yTakt - 4*dpr);
+  if(taktVal>0){
+    guides.push({ y: msToY(taktVal*1000), color:'#dc2626', text:`${L[lang].TAKT_LABEL} ${taktVal}s`, dash:[2*dpr,3*dpr] });
   }
+
+  // sortera efter y och ge minsta vertikal separation
+  guides.sort((a,b)=>a.y-b.y);
+  const minSep = 16*dpr;
+  for(let i=1;i<guides.length;i++){
+    if(guides[i].y - guides[i-1].y < minSep){
+      guides[i].y = guides[i-1].y + minSep;
+    }
+  }
+  // håll inom yta
+  guides.forEach(g=>{
+    g.y = Math.max(12*dpr, Math.min(padT + (H-padB-padT), g.y));
+  });
+
+  // rita linjer + etikettboxar på HÖGER (ovanpå staplarna)
+  guides.forEach(g=>{
+    ctx.setLineDash(g.dash||[]);
+    ctx.strokeStyle=g.color; ctx.lineWidth=1.7*dpr;
+    ctx.beginPath(); ctx.moveTo(padL, g.y); ctx.lineTo(W - padR, g.y); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // liten ledare till box
+    ctx.beginPath(); ctx.moveTo(W - padR, g.y); ctx.lineTo(W - padR + 6*dpr, g.y); ctx.stroke();
+
+    // box
+    const labelPadX=6*dpr, labelPadY=3*dpr;
+    ctx.font = `${12*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+    const textW = ctx.measureText(g.text).width;
+    const boxW = textW + labelPadX*2 + 4*dpr;
+    const boxH = 18*dpr;
+
+    const bx = W - padR + 8*dpr;
+    const by = g.y - boxH/2;
+
+    // vit bakgrund + tunn ram + färgad vänsterkant
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1*dpr;
+    roundRect(ctx, bx, by, boxW, boxH, 4*dpr, true, true);
+    // färgad kant
+    ctx.fillStyle = g.color;
+    ctx.fillRect(bx, by, 3*dpr, boxH);
+
+    // text
+    ctx.fillStyle = '#0f172a';
+    ctx.textBaseline='middle'; ctx.textAlign='left';
+    ctx.fillText(g.text, bx + labelPadX + 3*dpr, g.y);
+  });
+}
+
+/* Hjälpare: rundat rektanglar */
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  if (typeof r === 'number') r = {tl:r,tr:r,br:r,bl:r};
+  ctx.beginPath();
+  ctx.moveTo(x + r.tl, y);
+  ctx.lineTo(x + w - r.tr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r.tr);
+  ctx.lineTo(x + w, y + h - r.br);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r.br, y + h);
+  ctx.lineTo(x + r.bl, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r.bl);
+  ctx.lineTo(x, y + r.tl);
+  ctx.quadraticCurveTo(x, y, x + r.tl, y);
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
 }
 
 /* Live-loop för aktiv stapel */
@@ -496,7 +536,7 @@ function toggleLanguage(){
   refreshUI();
 }
 
-/* ===== DELNING / NEDLADDNING HJÄLPARE ===== */
+/* ===== DELNING / NEDLADDNING ===== */
 function buildCSVBlob() {
   const rows=[];
   rows.push(['Process', processInput.value||'']);
@@ -528,9 +568,7 @@ async function shareOrDownloadFile(blob, filename, mime, preferShare=true){
       });
       return;
     }
-  }catch(e){
-    // fallback
-  }
+  }catch(e){/* fall back to download */}
   downloadBlob(blob, filename);
 }
 
@@ -581,7 +619,6 @@ async function exportReport(){
   const rightX = x + chartW + 10;
   let ry = y;
 
-  // KPI-rutor
   const arr = laps.map(l=>l.ms);
   const avg = avgMs(arr);
   const br = brctMs(arr);
@@ -615,7 +652,6 @@ async function exportReport(){
   pdf.text(lang==='sv'?'Cykler':'Cycles', rightX, ry); ry += 6;
   pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
 
-  // Header
   const colW1 = 16, colW2 = 26, colW3 = (pageW-rightX-M) - colW1 - colW2 - 4;
   const rowH = 6;
   function row(x1,y1,vals,bold=false){
@@ -627,7 +663,6 @@ async function exportReport(){
     pdf.setDrawColor(229,231,235);
     pdf.line(x1, y1+rowH, x1+colW1+colW2+colW3, y1+rowH);
   }
-  // header line
   pdf.setDrawColor(229,231,235);
   pdf.line(rightX, ry, rightX+colW1+colW2+colW3, ry);
   row(rightX, ry, [lang==='sv'?'Nr':'No', lang==='sv'?'Tid':'Time', lang==='sv'?'Anteckning':'Notes'], true);
